@@ -1,0 +1,113 @@
+diff --git a/frontend/mop-inventario-frontend/src/auth/AuthContext.jsx b/frontend/mop-inventario-frontend/src/auth/AuthContext.jsx
+index e3c5a7e..a7f9d21 100644
+--- a/frontend/mop-inventario-frontend/src/auth/AuthContext.jsx
++++ b/frontend/mop-inventario-frontend/src/auth/AuthContext.jsx
+@@
+ import React, { createContext, useContext, useEffect, useState } from 'react';
+ // …existing imports…
+ 
+ const AuthContext = createContext();
+ 
+ export function AuthProvider({ children }) {
+-  const [user, setUser] = useState(null);
+-  const [settings, setSettings] = useState({ darkMode: false, compactTable: false });
++  const [user, setUser] = useState(null);
++  const [settings, setSettings] = useState({
++    darkMode: false,
++    compactTable: false,
++  });
+ 
+   useEffect(() => {
+-    const stored = JSON.parse(localStorage.getItem('settings') || '{}');
+-    setSettings(stored);
++    const stored = localStorage.getItem('settings');
++    if (stored) {
++      try {
++        setSettings(JSON.parse(stored));
++      } catch (e) {
++        console.warn('settings corrupt, usando valores por defecto', e);
++      }
++    }
+   }, []);
+ 
+   const saveSettings = (newSettings) => {
+     setSettings(newSettings);
+     localStorage.setItem('settings', JSON.stringify(newSettings));
+   };
++
++  const toggleDarkMode = () => {
++    saveSettings({ ...settings, darkMode: !settings.darkMode });
++  };
+ 
+   // …login, logout, etc…
+ 
+   return (
+     <AuthContext.Provider
+       value={{
+         user,
+         setUser,
+         settings,
+         saveSettings,
++        toggleDarkMode,
+         // …otros helpers…
+       }}
+     >
+       {children}
+     </AuthContext.Provider>
+   );
+ }
+ 
+ export function useAuth() {
+   return useContext(AuthContext);
+ }
+ 
+ export function useSettings() {
+   return useContext(AuthContext);
+ }
+diff --git a/frontend/mop-inventario-frontend/src/global/useTheme.js b/frontend/mop-inventario-frontend/src/global/useTheme.js
+index f0d82c4..c9a1e3b 100644
+--- a/frontend/mop-inventario-frontend/src/global/useTheme.js
++++ b/frontend/mop-inventario-frontend/src/global/useTheme.js
+@@
+ import { useSettings } from '../auth';
+ import { lightTheme, darkTheme } from './theme';
++import { useEffect } from 'react';
+ 
+ export function useTheme() {
+   const { settings } = useSettings(); // { darkMode, … }
+   const colors = settings?.darkMode ? darkTheme : lightTheme;
++
++  /* modifica la clase del body para que los estilos globales se apliquen */
++  useEffect(() => {
++    if (settings?.darkMode) {
++      document.body.classList.add('dark');
++    } else {
++      document.body.classList.remove('dark');
++    }
++  }, [settings?.darkMode]);
+ 
+   return { colors };
+ }
+diff --git a/frontend/mop-inventario-frontend/src/index.css b/frontend/mop-inventario-frontend/src/index.css
+index 97b1aef..c4e52b3 100644
+--- a/frontend/mop-inventario-frontend/src/index.css
++++ b/frontend/mop-inventario-frontend/src/index.css
+@@
+ body {
+   margin: 0;
+   font-family: system-ui, sans-serif;
++  background-color: var(--bg);
++  color: var(--text);
+ }
+ 
+ :root {
+   --bg: #ffffff;
+   --text: #333333;
++  --card: #f4f4f4;
++}
++
++body.dark {
++  --bg: #121212;
++  --text: #eeeeee;
++  --card: #1e1e1e;
+ }

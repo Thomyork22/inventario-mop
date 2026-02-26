@@ -1,0 +1,46 @@
+diff --git a/frontend/mop-inventario-frontend/src/global/theme.js b/frontend/mop-inventario-frontend/src/global/theme.js
+new file mode 100644
+index 0000000..e69de29
+--- /dev/null
++++ b/frontend/mop-inventario-frontend/src/global/theme.js
+@@
+ export const lightTheme = {
+   background: '#ffffff',
+   card: '#f4f4f4',
+   text: '#333333',
+   primary: '#4a90e2',
+   success: '#2ecc71',
+   danger: '#e74c3c',
+   sidebar: '#ffffff',
+   topbar: '#4a90e2',
+   // añade más tokens si los necesitas
+ };
+ 
+ export const darkTheme = {
+   background: '#121212',
+   card: '#1e1e1e',
+   text: '#eeeeee',
+   primary: '#4a90e2',
+   success: '#2ecc71',
+   danger: '#e74c3c',
+   sidebar: '#1e1e1e',
+   topbar: '#4a90e2',
+ };
+diff --git a/frontend/mop-inventario-frontend/src/global/useTheme.js b/frontend/mop-inventario-frontend/src/global/useTheme.js
+new file mode 100644
+index 0000000..e69de29
+--- /dev/null
++++ b/frontend/mop-inventario-frontend/src/global/useTheme.js
+@@
+-import { useSettings } from '../auth'; // ajusta si el contexto está en otra ruta
+-import { lightTheme, darkTheme } from './theme';
++import { useSettings } from '../auth';
++import { lightTheme, darkTheme } from './theme';
+ 
+ export function useTheme() {
+   const { settings } = useSettings(); // { darkMode, … }
+   const colors = settings?.darkMode ? darkTheme : lightTheme;
+   return { colors };
+ }
+diff --git a/frontend/mop-inventario-frontend/src/App.jsx b/frontend/mop-inventario-frontend/src/App.jsx
+...
