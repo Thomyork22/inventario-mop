@@ -3,7 +3,7 @@
 #   * Rearrange models' order
 #   * Make sure each model has one field with primary_key=True
 #   * Make sure each ForeignKey and OneToOneField has `on_delete` set to the desired behavior
-#   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table
+#   * Remove `managed = True` lines if you wish to allow Django to create, modify, and delete the table
 # Feel free to rename the models, but don't rename db_table values or field names.
 
 from django.db import models
@@ -30,7 +30,7 @@ class AsignacionEquipo(models.Model):
     fecha_actualizacion = models.DateTimeField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'asignacion_equipo'
         ordering = ['-id_asignacion']
 
@@ -64,7 +64,7 @@ class BajaEquipo(models.Model):
     fecha_actualizacion = models.DateTimeField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'baja_equipo'
         ordering = ['-id_baja']
 
@@ -79,7 +79,7 @@ class CargoFuncionario(models.Model):
     nivel_jerarquico = models.IntegerField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'cargo_funcionario'
         ordering = ['descripcion']
 
@@ -92,7 +92,7 @@ class CondicionEquipo(models.Model):
     descripcion = models.CharField(max_length=100)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'condicion_equipo'
         ordering = ['descripcion']
 
@@ -133,7 +133,7 @@ class Equipo(models.Model):
     fecha_actualizacion = models.DateTimeField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'equipo'
         ordering = ['-id_equipo']
 
@@ -157,7 +157,7 @@ class EquipoMonitor(models.Model):
     creado_por = models.ForeignKey('Funcionario', models.DO_NOTHING, db_column='creado_por', blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'equipo_monitor'
         ordering = ['-id_equipo_monitor']
 
@@ -172,7 +172,7 @@ class EstadoEquipo(models.Model):
     permite_asignacion = models.BooleanField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'estado_equipo'
         ordering = ['descripcion']
 
@@ -185,7 +185,7 @@ class EstadoMantenimiento(models.Model):
     descripcion = models.CharField(max_length=100)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'estado_mantenimiento'
         ordering = ['descripcion']
 
@@ -209,7 +209,7 @@ class Funcionario(models.Model):
     fecha_actualizacion = models.DateTimeField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'funcionario'
         ordering = ['nombre_completo']
 
@@ -233,7 +233,7 @@ class HistorialEstadoEquipo(models.Model):
     fecha_creacion = models.DateTimeField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'historial_estado_equipo'
         ordering = ['-id_historial_estado']
 
@@ -256,7 +256,7 @@ class HistorialUbicacionEquipo(models.Model):
     fecha_creacion = models.DateTimeField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'historial_ubicacion_equipo'
         ordering = ['-id_historial_ubicacion']
 
@@ -281,7 +281,7 @@ class LogAuditoriaGeneral(models.Model):
     mensaje_error = models.TextField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'log_auditoria_general'
         ordering = ['-id_log']
 
@@ -320,7 +320,7 @@ class Mantenimiento(models.Model):
     fecha_actualizacion = models.DateTimeField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'mantenimiento'
         ordering = ['-id_mantenimiento']
 
@@ -335,7 +335,7 @@ class Marca(models.Model):
     pais_origen = models.CharField(max_length=100, blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'marca'
         ordering = ['descripcion']
 
@@ -348,7 +348,7 @@ class MotivoEstadoEquipo(models.Model):
     descripcion = models.CharField(max_length=150)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'motivo_estado_equipo'
         ordering = ['descripcion']
 
@@ -363,7 +363,7 @@ class Procesador(models.Model):
     generacion = models.CharField(max_length=50, blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'procesador'
         ordering = ['descripcion']
 
@@ -377,7 +377,7 @@ class Ram(models.Model):
     tipo = models.CharField(max_length=50)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'ram'
         ordering = ['capacidad_gb']
 
@@ -391,7 +391,7 @@ class Region(models.Model):
     numero_romano = models.CharField(max_length=20, blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'region'
         ordering = ['codigo_region']
 
@@ -413,7 +413,7 @@ class ReporteGenerado(models.Model):
     observaciones = models.TextField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'reporte_generado'
         ordering = ['-id_reporte']
 
@@ -431,7 +431,7 @@ class RolSistema(models.Model):
     descripcion = models.TextField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'rol_sistema'
         ordering = ['nombre_rol']
 
@@ -446,7 +446,7 @@ class SistemaOperativo(models.Model):
     fabricante = models.CharField(max_length=100, blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'sistema_operativo'
         ordering = ['nombre', 'version']
 
@@ -460,7 +460,7 @@ class TipoAdquisicion(models.Model):
     descripcion = models.CharField(max_length=100)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'tipo_adquisicion'
         ordering = ['descripcion']
 
@@ -473,7 +473,7 @@ class TipoDisco(models.Model):
     descripcion = models.CharField(max_length=100)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'tipo_disco'
         ordering = ['descripcion']
 
@@ -486,7 +486,7 @@ class TipoEquipo(models.Model):
     descripcion = models.CharField(max_length=100)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'tipo_equipo'
         ordering = ['descripcion']
 
@@ -499,7 +499,7 @@ class TipoMantenimiento(models.Model):
     descripcion = models.CharField(max_length=100)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'tipo_mantenimiento'
         ordering = ['descripcion']
 
@@ -519,7 +519,7 @@ class Ubicacion(models.Model):
     fecha_creacion = models.DateTimeField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'ubicacion'
         ordering = ['nombre_sede']
 
@@ -533,7 +533,7 @@ class UnidadFuncionario(models.Model):
     sigla = models.CharField(max_length=20, blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'unidad_funcionario'
         ordering = ['descripcion']
 
@@ -558,7 +558,7 @@ class UsuarioSistema(models.Model):
     fecha_actualizacion = models.DateTimeField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'usuario_sistema'
         ordering = ['username']
 
