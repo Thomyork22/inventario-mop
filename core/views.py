@@ -1,7 +1,10 @@
 # core/views.py
 
 from datetime import timedelta
+from pathlib import Path
+from tempfile import NamedTemporaryFile
 
+from django.db import transaction
 from django.db.models import Count, Q
 from django.utils import timezone
 
@@ -14,14 +17,19 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 
 from core.auth_serializers import MeSerializer
-from .permissions import IsInMopInventarioGroup
+from .excel_import import ExcelInventoryImporter, rollback_import_lote
+from .permissions import IsInMopInventarioGroup, IsAdminImportUser
 
 from .models import (
     Equipo,
     AsignacionEquipo,
+    BajaEquipo,
+    EquipoMonitor,
     HistorialEstadoEquipo,
+    HistorialUbicacionEquipo,
     Mantenimiento,
     Marca,
+    CondicionEquipo,
     TipoEquipo,
     EstadoEquipo,
     Ubicacion,
@@ -29,6 +37,13 @@ from .models import (
     TipoMantenimiento,
     Funcionario,
     EstadoMantenimiento,
+    Ram,
+    Procesador,
+    SistemaOperativo,
+    TipoDisco,
+    TamanoDiscoCatalogo,
+    MarcaMonitorCatalogo,
+    PulgadaMonitorCatalogo,
 )
 
 from .serializers import (
@@ -49,12 +64,20 @@ from .serializers import (
 
     # catálogos
     MarcaSerializer,
+    CondicionEquipoSerializer,
     TipoEquipoSerializer,
     EstadoEquipoSerializer,
     UbicacionSerializer,
     RegionSerializer,
     TipoMantenimientoSerializer,
     EstadoMantenimientoSerializer,
+    RamSerializer,
+    ProcesadorSerializer,
+    SistemaOperativoSerializer,
+    TipoDiscoSerializer,
+    TamanoDiscoCatalogoSerializer,
+    MarcaMonitorCatalogoSerializer,
+    PulgadaMonitorCatalogoSerializer,
 
     # funcionarios
     FuncionarioMiniSerializer,
@@ -312,6 +335,12 @@ class EstadoEquipoViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = EstadoEquipoSerializer
 
 
+class CondicionEquipoViewSet(viewsets.ReadOnlyModelViewSet):
+    permission_classes = [IsAuthenticated, IsInMopInventarioGroup]
+    queryset = CondicionEquipo.objects.all().order_by("descripcion")
+    serializer_class = CondicionEquipoSerializer
+
+
 class RegionViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticated, IsInMopInventarioGroup]
     queryset = Region.objects.all().order_by("codigo_region")
@@ -322,6 +351,48 @@ class UbicacionViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticated, IsInMopInventarioGroup]
     queryset = Ubicacion.objects.all().order_by("nombre_sede")
     serializer_class = UbicacionSerializer
+
+
+class RamViewSet(viewsets.ReadOnlyModelViewSet):
+    permission_classes = [IsAuthenticated, IsInMopInventarioGroup]
+    queryset = Ram.objects.all().order_by("descripcion")
+    serializer_class = RamSerializer
+
+
+class ProcesadorViewSet(viewsets.ReadOnlyModelViewSet):
+    permission_classes = [IsAuthenticated, IsInMopInventarioGroup]
+    queryset = Procesador.objects.all().order_by("descripcion")
+    serializer_class = ProcesadorSerializer
+
+
+class SistemaOperativoViewSet(viewsets.ReadOnlyModelViewSet):
+    permission_classes = [IsAuthenticated, IsInMopInventarioGroup]
+    queryset = SistemaOperativo.objects.all().order_by("descripcion", "nombre")
+    serializer_class = SistemaOperativoSerializer
+
+
+class TipoDiscoViewSet(viewsets.ReadOnlyModelViewSet):
+    permission_classes = [IsAuthenticated, IsInMopInventarioGroup]
+    queryset = TipoDisco.objects.all().order_by("descripcion")
+    serializer_class = TipoDiscoSerializer
+
+
+class TamanoDiscoCatalogoViewSet(viewsets.ReadOnlyModelViewSet):
+    permission_classes = [IsAuthenticated, IsInMopInventarioGroup]
+    queryset = TamanoDiscoCatalogo.objects.all().order_by("descripcion")
+    serializer_class = TamanoDiscoCatalogoSerializer
+
+
+class MarcaMonitorCatalogoViewSet(viewsets.ReadOnlyModelViewSet):
+    permission_classes = [IsAuthenticated, IsInMopInventarioGroup]
+    queryset = MarcaMonitorCatalogo.objects.all().order_by("descripcion")
+    serializer_class = MarcaMonitorCatalogoSerializer
+
+
+class PulgadaMonitorCatalogoViewSet(viewsets.ReadOnlyModelViewSet):
+    permission_classes = [IsAuthenticated, IsInMopInventarioGroup]
+    queryset = PulgadaMonitorCatalogo.objects.all().order_by("descripcion")
+    serializer_class = PulgadaMonitorCatalogoSerializer
 
 
 class TipoMantenimientoViewSet(viewsets.ReadOnlyModelViewSet):
@@ -440,3 +511,100 @@ class DashboardStatsView(APIView):
             "garantias_por_vencer": garantias_por_vencer,
             "por_sede": por_sede,
         })
+
+
+class ImportInventarioExcelView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminImportUser]
+
+    def post(self, request):
+        path_getter = getattr(request.data, "get", None)
+        path = path_getter("path") if callable(path_getter) else None
+        uploaded_file = request.FILES.get("file")
+        temp_path = None
+
+        try:
+            if uploaded_file is not None:
+                suffix = Path(uploaded_file.name or "inventario.xlsx").suffix or ".xlsx"
+                with NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+                    for chunk in uploaded_file.chunks():
+                        tmp.write(chunk)
+                    temp_path = tmp.name
+                importer = ExcelInventoryImporter(path=temp_path)
+            else:
+                importer = ExcelInventoryImporter(path=path)
+            summary = importer.run()
+        except Exception as exc:
+            return Response(
+                {
+                    "detail": "No se pudo importar el inventario.",
+                    "error": str(exc),
+                },
+                status=400,
+            )
+        finally:
+            if temp_path:
+                Path(temp_path).unlink(missing_ok=True)
+
+        return Response(summary)
+
+
+class RollbackInventarioExcelView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminImportUser]
+
+    def post(self, request):
+        path_getter = getattr(request.data, "get", None)
+        lote_id = path_getter("id_lote") if callable(path_getter) else None
+
+        try:
+            lote = None
+            if lote_id not in (None, ""):
+                from .models import ImportacionInventarioLote
+                lote = ImportacionInventarioLote.objects.filter(id_lote=lote_id).first()
+                if lote is None:
+                    raise ValueError(f"No existe el lote #{lote_id}.")
+            summary = rollback_import_lote(lote=lote)
+        except Exception as exc:
+            return Response(
+                {
+                    "detail": "No se pudo revertir la importación.",
+                    "error": str(exc),
+                },
+                status=400,
+            )
+
+        return Response(summary)
+
+
+class ClearInventarioView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminImportUser]
+
+    @transaction.atomic
+    def post(self, request):
+        total_equipos = Equipo.objects.count()
+        total_asignaciones = AsignacionEquipo.objects.count()
+        total_monitores = EquipoMonitor.objects.count()
+        total_historial_estados = HistorialEstadoEquipo.objects.count()
+        total_historial_ubicaciones = HistorialUbicacionEquipo.objects.count()
+        total_mantenimientos = Mantenimiento.objects.count()
+        total_bajas = BajaEquipo.objects.count()
+
+        AsignacionEquipo.objects.all().delete()
+        EquipoMonitor.objects.all().delete()
+        HistorialEstadoEquipo.objects.all().delete()
+        HistorialUbicacionEquipo.objects.all().delete()
+        Mantenimiento.objects.all().delete()
+        BajaEquipo.objects.all().delete()
+        Equipo.objects.all().delete()
+
+        return Response(
+            {
+                "detail": "Inventario eliminado correctamente.",
+                "equipos_eliminados": total_equipos,
+                "asignaciones_eliminadas": total_asignaciones,
+                "monitores_eliminados": total_monitores,
+                "historial_estados_eliminados": total_historial_estados,
+                "historial_ubicaciones_eliminados": total_historial_ubicaciones,
+                "mantenimientos_eliminados": total_mantenimientos,
+                "bajas_eliminadas": total_bajas,
+            }
+        )

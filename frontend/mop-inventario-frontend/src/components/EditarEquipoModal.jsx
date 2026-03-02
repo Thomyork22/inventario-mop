@@ -23,6 +23,12 @@ export default function EditarEquipoModal({
     codigo_tipo_id: "",
     codigo_marca_id: "",
     codigo_estado_id: "",
+    codigo_condicion_id: "",
+    codigo_ram_id: "",
+    codigo_procesador_id: "",
+    codigo_so_id: "",
+    codigo_disco_id: "",
+    tamano_disco_id: "",
     id_ubicacion_id: "",
   });
 
@@ -53,6 +59,12 @@ export default function EditarEquipoModal({
       codigo_tipo_id: equipo?.tipo_equipo?.codigo_tipo ?? "",
       codigo_marca_id: equipo?.marca?.codigo_marca ?? "",
       codigo_estado_id: equipo?.estado?.codigo_estado ?? "",
+      codigo_condicion_id: equipo?.condicion?.codigo_condicion ?? "",
+      codigo_ram_id: equipo?.ram?.codigo_ram ?? "",
+      codigo_procesador_id: equipo?.procesador?.codigo_procesador ?? "",
+      codigo_so_id: equipo?.sistema_operativo?.codigo_so ?? "",
+      codigo_disco_id: equipo?.tipo_disco?.codigo_disco ?? "",
+      tamano_disco_id: equipo?.tamano_disco_catalogo?.id ?? "",
       id_ubicacion_id: equipo?.ubicacion?.id_ubicacion ?? "",
     });
   }, [open, equipo]);
@@ -88,6 +100,12 @@ export default function EditarEquipoModal({
         codigo_tipo_id: form.codigo_tipo_id ? Number(form.codigo_tipo_id) : null,
         codigo_marca_id: form.codigo_marca_id ? Number(form.codigo_marca_id) : null,
         codigo_estado_id: form.codigo_estado_id ? Number(form.codigo_estado_id) : null,
+        codigo_condicion_id: form.codigo_condicion_id ? Number(form.codigo_condicion_id) : null,
+        codigo_ram_id: form.codigo_ram_id ? Number(form.codigo_ram_id) : null,
+        codigo_procesador_id: form.codigo_procesador_id ? Number(form.codigo_procesador_id) : null,
+        codigo_so_id: form.codigo_so_id ? Number(form.codigo_so_id) : null,
+        codigo_disco_id: form.codigo_disco_id ? Number(form.codigo_disco_id) : null,
+        tamano_disco_id: form.tamano_disco_id ? Number(form.tamano_disco_id) : null,
         id_ubicacion_id: form.id_ubicacion_id ? Number(form.id_ubicacion_id) : null,
       };
 
@@ -115,6 +133,12 @@ export default function EditarEquipoModal({
   const ubicaciones = catalogos?.ubicaciones ?? [];
   const marcas = catalogos?.marcas ?? [];
   const tipos = catalogos?.tipos ?? [];
+  const condiciones = catalogos?.condiciones ?? [];
+  const ramCatalogo = catalogos?.ram ?? [];
+  const procesadores = catalogos?.procesadores ?? [];
+  const sistemasOperativos = catalogos?.sistemasOperativos ?? [];
+  const tiposDisco = catalogos?.tiposDisco ?? [];
+  const tamanosDisco = catalogos?.tamanosDisco ?? [];
 
   return (
     <div className="backdrop" onMouseDown={onClose}>
@@ -210,6 +234,96 @@ export default function EditarEquipoModal({
                 {ubicaciones.map((x) => (
                   <option key={x.id_ubicacion} value={x.id_ubicacion}>
                     {x.nombre_sede}
+                  </option>
+                ))}
+              </select>
+            </Field>
+
+            <Field label="Condición">
+              <select
+                className="select"
+                value={form.codigo_condicion_id}
+                onChange={(e) => setField("codigo_condicion_id", e.target.value)}
+              >
+                <option value="">—</option>
+                {condiciones.map((x) => (
+                  <option key={x.codigo_condicion} value={x.codigo_condicion}>
+                    {x.descripcion}
+                  </option>
+                ))}
+              </select>
+            </Field>
+
+            <Field label="RAM">
+              <select
+                className="select"
+                value={form.codigo_ram_id}
+                onChange={(e) => setField("codigo_ram_id", e.target.value)}
+              >
+                <option value="">—</option>
+                {ramCatalogo.map((x) => (
+                  <option key={x.codigo_ram} value={x.codigo_ram}>
+                    {x.descripcion}
+                  </option>
+                ))}
+              </select>
+            </Field>
+
+            <Field label="Procesador">
+              <select
+                className="select"
+                value={form.codigo_procesador_id}
+                onChange={(e) => setField("codigo_procesador_id", e.target.value)}
+              >
+                <option value="">—</option>
+                {procesadores.map((x) => (
+                  <option key={x.codigo_procesador} value={x.codigo_procesador}>
+                    {x.descripcion}
+                  </option>
+                ))}
+              </select>
+            </Field>
+
+            <Field label="S.O">
+              <select
+                className="select"
+                value={form.codigo_so_id}
+                onChange={(e) => setField("codigo_so_id", e.target.value)}
+              >
+                <option value="">—</option>
+                {sistemasOperativos.map((x) => (
+                  <option key={x.codigo_so} value={x.codigo_so}>
+                    {x.descripcion || x.nombre}
+                  </option>
+                ))}
+              </select>
+            </Field>
+
+            <Field label="Tamaño disco">
+              <select
+                className="select"
+                value={form.tamano_disco_id}
+                onChange={(e) => setField("tamano_disco_id", e.target.value)}
+              >
+                <option value="">—</option>
+                {tamanosDisco.map((x) => (
+                  <option key={x.id} value={x.id}>
+                    {x.descripcion}
+                  </option>
+                ))}
+              </select>
+            </Field>
+
+            <Field label="Tipo disco">
+              <select
+                className="select"
+                value={form.codigo_disco_id}
+                onChange={(e) => setField("codigo_disco_id", e.target.value)}
+              >
+                <option value="">—</option>
+                {tiposDisco.map((x) => (
+                  <option key={x.codigo_disco} value={x.codigo_disco}>
+                    {x.descripcion}
                   </option>
                 ))}
               </select>

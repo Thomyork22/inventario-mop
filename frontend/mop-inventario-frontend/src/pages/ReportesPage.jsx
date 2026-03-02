@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../api/api";
+import { useCatalogos } from "../catalogos/CatalogosContext.jsx";
 
 export default function ReportesPage() {
-  // --- catálogos para filtros ---
-  const [ubicaciones, setUbicaciones] = useState([]);
-  const [estadosEquipo, setEstadosEquipo] = useState([]);
+  const { data: catalogosData, loading: loadingCats, errors: catalogosErrors, reload } = useCatalogos();
 
   // --- filtros inventario ---
   const [invActivo, setInvActivo] = useState(""); // "" | "true" | "false"
@@ -19,9 +18,11 @@ export default function ReportesPage() {
   const [garDias, setGarDias] = useState(30);
 
   // --- ui ---
-  const [loadingCats, setLoadingCats] = useState(true);
   const [downloading, setDownloading] = useState(false);
   const [err, setErr] = useState("");
+
+  const ubicaciones = catalogosData.sedes ?? [];
+  const estadosEquipo = catalogosData.estados ?? [];
 
   const invParams = useMemo(() => {
     const p = {};
@@ -42,30 +43,10 @@ export default function ReportesPage() {
     return p;
   }, [garTipo, garDias]);
 
-  async function loadCatalogos() {
-    setLoadingCats(true);
-    setErr("");
-    try {
-      const [u, e] = await Promise.all([
-        api.get("/catalogos/ubicaciones/", { params: { page_size: 9999 } }),
-        api.get("/catalogos/estados-equipo/", { params: { page_size: 9999 } }),
-      ]);
-
-      const uList = u.data?.results ?? u.data ?? [];
-      const eList = e.data?.results ?? e.data ?? [];
-
-      setUbicaciones(Array.isArray(uList) ? uList : []);
-      setEstadosEquipo(Array.isArray(eList) ? eList : []);
-    } catch (e) {
-      setErr(e?.response?.data?.detail || e?.message || "No se pudieron cargar los catálogos.");
-    } finally {
-      setLoadingCats(false);
-    }
-  }
-
   useEffect(() => {
-    loadCatalogos();
-  }, []);
+    const firstError = Object.values(catalogosErrors || {})[0];
+    setErr(firstError || "");
+  }, [catalogosErrors]);
 
   async function downloadFile({ url, filename, params }) {
     setDownloading(true);
@@ -106,13 +87,16 @@ export default function ReportesPage() {
         </div>
 
         <div className="headerActions">
-          <button className="secondaryBtn" onClick={loadCatalogos} disabled={loadingCats || downloading}>
+          <button className="secondaryBtn" onClick={reload} disabled={loadingCats || downloading}>
             {loadingCats ? "Cargando…" : "Recargar catálogos"}
           </button>
         </div>
       </div>
 
       {err ? <div className="error">{err}</div> : null}
+      {!loadingCats && ubicaciones.length === 0 && estadosEquipo.length === 0 ? (
+        <div className="empty">Los catálogos están vacíos.</div>
+      ) : null}
 
       {/* Cards */}
       <div className="grid">

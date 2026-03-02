@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { api } from "../api/api";
+import { useCatalogos } from "../catalogos/CatalogosContext.jsx";
 import EquipoDetailModal from "../components/EquipoDetailModal.jsx";
 import AsignarDevolverModal from "../components/AsignarDevolverModal.jsx";
 import EditarEquipoModal from "../components/EditarEquipoModal.jsx";
@@ -18,13 +19,7 @@ function useDebounced(value, delay = 350) {
 export default function InventarioPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const urlUbicacion = searchParams.get("id_ubicacion") || "";
-
-  const [catalogos, setCatalogos] = useState({
-    estados: [],
-    ubicaciones: [],
-    marcas: [],
-    tipos: [],
-  });
+  const { data: catalogosData, loading: catalogosLoading, errors: catalogosErrors } = useCatalogos();
 
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounced(search, 350);
@@ -49,6 +44,8 @@ export default function InventarioPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [bulkActionMsg, setBulkActionMsg] = useState("");
+  const [clearingAll, setClearingAll] = useState(false);
 
   // Modal detalle
   const [detailOpen, setDetailOpen] = useState(false);
@@ -62,6 +59,29 @@ export default function InventarioPage() {
 
   // Modal nuevo
   const [nuevoOpen, setNuevoOpen] = useState(false);
+
+  const catalogos = useMemo(
+    () => ({
+      estados: catalogosData.estados ?? [],
+      ubicaciones: catalogosData.sedes ?? [],
+      marcas: catalogosData.marcas ?? [],
+      tipos: catalogosData.tipos ?? [],
+      condiciones: catalogosData.condiciones ?? [],
+      ram: catalogosData.ram ?? [],
+      procesadores: catalogosData.procesadores ?? [],
+      sistemasOperativos: catalogosData.sistemasOperativos ?? [],
+      tiposDisco: catalogosData.tiposDisco ?? [],
+      tamanosDisco: catalogosData.tamanosDisco ?? [],
+      marcasMonitor: catalogosData.marcasMonitor ?? [],
+      pulgadasMonitor: catalogosData.pulgadasMonitor ?? [],
+    }),
+    [catalogosData]
+  );
+
+  const catalogosError = useMemo(() => {
+    const values = Object.values(catalogosErrors || {});
+    return values[0] || "";
+  }, [catalogosErrors]);
 
   // =========================
   // 1) Leer id_ubicacion desde URL y sincronizarlo al filtro
@@ -194,38 +214,6 @@ export default function InventarioPage() {
   }
 
   useEffect(() => {
-    let mounted = true;
-
-    async function loadCatalogos() {
-      try {
-        const [estadosRes, ubicRes, marcasRes, tiposRes] = await Promise.all([
-          api.get("/catalogos/estados-equipo/"),
-          api.get("/catalogos/ubicaciones/"),
-          api.get("/catalogos/marcas/"),
-          api.get("/catalogos/tipos-equipo/"),
-        ]);
-
-        const pick = (res) => res.data?.results ?? res.data ?? [];
-
-        if (!mounted) return;
-        setCatalogos({
-          estados: pick(estadosRes),
-          ubicaciones: pick(ubicRes),
-          marcas: pick(marcasRes),
-          tipos: pick(tiposRes),
-        });
-      } catch (e) {
-        console.error("Error cargando catálogos", e);
-      }
-    }
-
-    loadCatalogos();
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  useEffect(() => {
     reloadEquipos();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queryParams]);
@@ -237,8 +225,42 @@ export default function InventarioPage() {
     setDetailOpen(true);
   }
 
+  async function clearAllInventario() {
+    const confirmed = window.confirm(
+      "Se eliminarán todos los equipos del inventario junto con sus asignaciones, monitores, mantenimientos e historiales. Esta acción no se puede deshacer. ¿Deseas continuar?"
+    );
+    if (!confirmed) return;
+
+    setClearingAll(true);
+    setError("");
+    setBulkActionMsg("");
+
+    try {
+      const res = await api.post("/inventario/clear/");
+      setDetailOpen(false);
+      setAsignarOpen(false);
+      setEditarOpen(false);
+      setSelectedEquipo(null);
+      setPage(1);
+      await reloadEquipos();
+      setBulkActionMsg(
+        res.data?.detail ||
+        `Inventario vaciado. ${res.data?.equipos_eliminados ?? 0} equipo(s) eliminados.`
+      );
+    } catch (e) {
+      setError(e?.response?.data?.detail || e?.message || "No se pudo eliminar el inventario.");
+    } finally {
+      setClearingAll(false);
+    }
+  }
+
   return (
     <div>
+      {catalogosError ? <div className="error">{catalogosError}</div> : null}
+      {catalogosLoading && catalogos.estados.length === 0 ? (
+        <div className="empty">Cargando catálogos…</div>
+      ) : null}
+
       {/* MODAL DETALLE */}
       <EquipoDetailModal
         open={detailOpen}
@@ -297,6 +319,14 @@ export default function InventarioPage() {
         <div className="headerActions">
           <button className="secondaryBtn" onClick={clearFilters}>
             Limpiar filtros
+          </button>
+          <button
+            className="inventoryDangerBtn"
+            onClick={clearAllInventario}
+            disabled={clearingAll}
+            title="Eliminar todo el inventario"
+          >
+            {clearingAll ? "Eliminando..." : "Vaciar inventario"}
           </button>
           <button
             className="primaryBtn"
@@ -423,6 +453,8 @@ export default function InventarioPage() {
               <span className="badgeInfo">Cargando…</span>
             ) : error ? (
               <span className="badgeError">{error}</span>
+            ) : bulkActionMsg ? (
+              <span className="badgeOk">{bulkActionMsg}</span>
             ) : (
               <span className="badgeOk">{data.count} resultado(s)</span>
             )}

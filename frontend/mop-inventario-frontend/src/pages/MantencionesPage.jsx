@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../api/api";
+import { useCatalogos } from "../catalogos/CatalogosContext.jsx";
 
 export default function MantencionesPage() {
+  const { data: catalogosData, loading: loadingCatalogos, errors: catalogosErrors } = useCatalogos();
   // ---- data ----
   const [rows, setRows] = useState([]);
   const [count, setCount] = useState(0);
 
-  const [tipos, setTipos] = useState([]);
   const [equipos, setEquipos] = useState([]);
-  const [estadosMant, setEstadosMant] = useState([]); // catálogo estados mantenimiento
+  const tipos = catalogosData.tiposMantenimiento ?? [];
+  const estadosMant = catalogosData.estadosMantenimiento ?? [];
 
   // ---- ui ----
   const [loading, setLoading] = useState(true);
@@ -94,18 +96,6 @@ export default function MantencionesPage() {
     });
   }
 
-  async function loadCatalogos() {
-    const res = await api.get("/catalogos/tipos-mantenimiento/");
-    setTipos(res.data?.results ?? res.data ?? []);
-
-    try {
-      const res2 = await api.get("/catalogos/estados-mantenimiento/");
-      setEstadosMant(res2.data?.results ?? res2.data ?? []);
-    } catch {
-      setEstadosMant([]);
-    }
-  }
-
   async function searchEquipos(term) {
     if (!term || term.trim().length < 2) {
       setEquipos([]);
@@ -161,13 +151,16 @@ export default function MantencionesPage() {
   useEffect(() => {
     (async () => {
       try {
-        await loadCatalogos();
+        if (Object.keys(catalogosErrors || {}).length > 0) {
+          const firstError = Object.values(catalogosErrors)[0];
+          setErr(firstError || "");
+        }
       } finally {
         loadMantenimientos(1);
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [catalogosErrors]);
 
   // cambios filtros -> vuelve a page 1
   useEffect(() => {
@@ -345,6 +338,10 @@ export default function MantencionesPage() {
 
   return (
     <div>
+      {loadingCatalogos && tipos.length === 0 ? (
+        <div className="empty">Cargando catálogos…</div>
+      ) : null}
+
       {/* Header */}
       <div className="headerRow">
         <div>

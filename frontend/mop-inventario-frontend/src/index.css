@@ -493,6 +493,180 @@ td {
   color: var(--muted);
 }
 
+.config-import-shell {
+  display: grid;
+  gap: 12px;
+}
+
+.config-import-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.config-import-field {
+  display: grid;
+  gap: 8px;
+}
+
+.config-import-hidden-input {
+  display: none;
+}
+
+.config-import-input {
+  width: 100%;
+  height: 42px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, var(--card) 0%, var(--card-soft) 100%);
+  color: var(--text);
+  padding: 0 14px;
+  font-weight: 700;
+  outline: none;
+}
+
+.config-import-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(20, 117, 96, 0.12);
+}
+
+.config-import-file-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.config-import-file-btn {
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background:
+    radial-gradient(circle at top left, rgba(20, 117, 96, 0.1), transparent 40%),
+    var(--card);
+  color: var(--text-strong);
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.config-import-file-pill {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px dashed var(--border);
+  background: var(--card-soft);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.config-import-file-pill.is-filled {
+  border-style: solid;
+  border-color: rgba(20, 117, 96, 0.24);
+  background: rgba(20, 117, 96, 0.08);
+  color: var(--text-strong);
+}
+
+.config-import-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.config-import-metric {
+  border: 1px solid var(--border-soft);
+  background:
+    radial-gradient(circle at top right, rgba(20, 117, 96, 0.08), transparent 42%),
+    var(--card);
+  border-radius: 16px;
+  padding: 12px;
+}
+
+.config-import-metric.is-ok {
+  border-color: var(--success-border);
+  background: linear-gradient(180deg, var(--success-bg) 0%, var(--card) 100%);
+}
+
+.config-import-metric.is-warn {
+  border-color: rgba(180, 83, 9, 0.28);
+  background: linear-gradient(180deg, rgba(251, 191, 36, 0.12) 0%, var(--card) 100%);
+}
+
+.config-import-value {
+  margin-top: 6px;
+  font-size: 24px;
+  line-height: 1;
+  font-weight: 900;
+  color: var(--text-strong);
+}
+
+.config-import-errors {
+  display: grid;
+  gap: 8px;
+}
+
+.config-import-progress-wrap {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at top left, rgba(20, 117, 96, 0.08), transparent 36%),
+    var(--card);
+}
+
+.config-import-progress-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.config-import-progress-text {
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--text-strong);
+}
+
+.config-import-progress-track {
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--card-soft);
+  border: 1px solid var(--border-soft);
+}
+
+.config-import-progress-bar {
+  height: 100%;
+  width: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #0f766e 0%, #14b8a6 100%);
+  transition: width 180ms ease;
+}
+
+.config-import-progress-bar.is-ok {
+  background: linear-gradient(90deg, #15803d 0%, #4ade80 100%);
+}
+
+.config-import-progress-bar.is-err {
+  background: linear-gradient(90deg, #b91c1c 0%, #fb7185 100%);
+}
+
+.config-import-error-item {
+  border: 1px solid var(--danger-border);
+  background: linear-gradient(180deg, var(--danger-bg) 0%, var(--card) 100%);
+  color: var(--danger-text);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .status-box {
   margin-top: 12px;
   padding: 10px;
@@ -860,6 +1034,20 @@ html.dark .dash-kpi-card.is-warn {
   .config-kv-grid {
     grid-template-columns: 1fr;
   }
+
+  .config-import-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .config-import-actions {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .config-import-file-row {
+    align-items: stretch;
+  }
 }
 
 
@@ -910,6 +1098,19 @@ html.dark .dash-kpi-card.is-warn {
   background: #fff;
   color: #111827;
   font-weight: 800;
+  cursor: pointer;
+}
+
+.inventoryDangerBtn {
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid var(--danger-border);
+  background:
+    radial-gradient(circle at top left, color-mix(in srgb, var(--danger-text) 12%, transparent), transparent 44%),
+    var(--danger-bg);
+  color: var(--danger-text);
+  font-weight: 900;
   cursor: pointer;
 }
 

@@ -89,6 +89,7 @@ class CargoFuncionario(models.Model):
 
 class CondicionEquipo(models.Model):
     codigo_condicion = models.AutoField(primary_key=True)
+    codigo = models.IntegerField(blank=True, null=True)
     descripcion = models.CharField(max_length=100)
 
     class Meta:
@@ -111,6 +112,7 @@ class Equipo(models.Model):
     codigo_procesador = models.ForeignKey('Procesador', models.DO_NOTHING, db_column='codigo_procesador', blank=True, null=True)
     codigo_so = models.ForeignKey('SistemaOperativo', models.DO_NOTHING, db_column='codigo_so', blank=True, null=True)
     codigo_disco = models.ForeignKey('TipoDisco', models.DO_NOTHING, db_column='codigo_disco', blank=True, null=True)
+    tamano_disco = models.ForeignKey('TamanoDiscoCatalogo', models.DO_NOTHING, db_column='tamano_disco', blank=True, null=True)
     capacidad_disco_gb = models.IntegerField(blank=True, null=True)
     codigo_condicion = models.ForeignKey(CondicionEquipo, models.DO_NOTHING, db_column='codigo_condicion', blank=True, null=True)
     codigo_estado = models.ForeignKey('EstadoEquipo', models.DO_NOTHING, db_column='codigo_estado', blank=True, null=True)
@@ -145,8 +147,10 @@ class EquipoMonitor(models.Model):
     id_equipo_monitor = models.AutoField(primary_key=True)
     id_equipo = models.ForeignKey(Equipo, models.DO_NOTHING, db_column='id_equipo', blank=True, null=True)
     marca_monitor = models.CharField(max_length=100, blank=True, null=True)
+    marca_monitor_catalogo = models.ForeignKey('MarcaMonitorCatalogo', models.DO_NOTHING, db_column='marca_monitor_catalogo', blank=True, null=True)
     modelo_monitor = models.CharField(max_length=100, blank=True, null=True)
     pulgadas = models.IntegerField(blank=True, null=True)
+    pulgada_monitor_catalogo = models.ForeignKey('PulgadaMonitorCatalogo', models.DO_NOTHING, db_column='pulgada_monitor_catalogo', blank=True, null=True)
     resolucion = models.CharField(max_length=50, blank=True, null=True)
     tipo_panel = models.CharField(max_length=50, blank=True, null=True)
     numero_serie_monitor = models.CharField(unique=True, max_length=100, blank=True, null=True)
@@ -168,6 +172,7 @@ class EquipoMonitor(models.Model):
 
 class EstadoEquipo(models.Model):
     codigo_estado = models.AutoField(primary_key=True)
+    codigo = models.IntegerField(blank=True, null=True)
     descripcion = models.CharField(max_length=100)
     permite_asignacion = models.BooleanField(blank=True, null=True)
 
@@ -265,6 +270,41 @@ class HistorialUbicacionEquipo(models.Model):
         return f"Mov. Ubicación #{self.id_historial_ubicacion} - {inv or 'Sin equipo'}"
 
 
+class ImportacionInventarioLote(models.Model):
+    id_lote = models.AutoField(primary_key=True)
+    archivo_origen = models.CharField(max_length=255)
+    estado = models.CharField(max_length=30, default='completado')
+    resumen = models.JSONField(blank=True, null=True)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    creado_por = models.ForeignKey('UsuarioSistema', models.DO_NOTHING, db_column='creado_por', blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'importacion_inventario_lote'
+        ordering = ['-id_lote']
+
+    def __str__(self):
+        return f"Lote #{self.id_lote} - {self.archivo_origen}"
+
+
+class ImportacionInventarioRegistro(models.Model):
+    id_registro = models.AutoField(primary_key=True)
+    id_lote = models.ForeignKey(ImportacionInventarioLote, models.DO_NOTHING, db_column='id_lote', related_name='registros')
+    modelo = models.CharField(max_length=100)
+    object_id = models.IntegerField()
+    accion = models.CharField(max_length=20)
+    snapshot_previo = models.JSONField(blank=True, null=True)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        managed = True
+        db_table = 'importacion_inventario_registro'
+        ordering = ['-id_registro']
+
+    def __str__(self):
+        return f"{self.modelo} #{self.object_id} ({self.accion})"
+
+
 class LogAuditoriaGeneral(models.Model):
     id_log = models.AutoField(primary_key=True)
     tabla_afectada = models.CharField(max_length=100, blank=True, null=True)
@@ -331,6 +371,7 @@ class Mantenimiento(models.Model):
 
 class Marca(models.Model):
     codigo_marca = models.AutoField(primary_key=True)
+    codigo = models.IntegerField(blank=True, null=True)
     descripcion = models.CharField(max_length=100)
     pais_origen = models.CharField(max_length=100, blank=True, null=True)
 
@@ -358,6 +399,7 @@ class MotivoEstadoEquipo(models.Model):
 
 class Procesador(models.Model):
     codigo_procesador = models.AutoField(primary_key=True)
+    codigo = models.IntegerField(blank=True, null=True)
     descripcion = models.CharField(max_length=150)
     fabricante = models.CharField(max_length=100, blank=True, null=True)
     generacion = models.CharField(max_length=50, blank=True, null=True)
@@ -373,16 +415,18 @@ class Procesador(models.Model):
 
 class Ram(models.Model):
     codigo_ram = models.AutoField(primary_key=True)
-    capacidad_gb = models.IntegerField()
-    tipo = models.CharField(max_length=50)
+    codigo = models.IntegerField(blank=True, null=True)
+    descripcion = models.CharField(max_length=150)
+    capacidad_gb = models.IntegerField(blank=True, null=True)
+    tipo = models.CharField(max_length=50, blank=True, null=True)
 
     class Meta:
         managed = True
         db_table = 'ram'
-        ordering = ['capacidad_gb']
+        ordering = ['descripcion']
 
     def __str__(self):
-        return f"{self.capacidad_gb} GB {self.tipo}"
+        return self.descripcion
 
 
 class Region(models.Model):
@@ -441,6 +485,8 @@ class RolSistema(models.Model):
 
 class SistemaOperativo(models.Model):
     codigo_so = models.AutoField(primary_key=True)
+    codigo = models.IntegerField(blank=True, null=True)
+    descripcion = models.CharField(max_length=150, blank=True, null=True)
     nombre = models.CharField(max_length=100)
     version = models.CharField(max_length=50, blank=True, null=True)
     fabricante = models.CharField(max_length=100, blank=True, null=True)
@@ -448,9 +494,11 @@ class SistemaOperativo(models.Model):
     class Meta:
         managed = True
         db_table = 'sistema_operativo'
-        ordering = ['nombre', 'version']
+        ordering = ['descripcion', 'nombre', 'version']
 
     def __str__(self):
+        if self.descripcion:
+            return self.descripcion
         v = f" {self.version}" if self.version else ""
         return f"{self.nombre}{v}"
 
@@ -470,6 +518,7 @@ class TipoAdquisicion(models.Model):
 
 class TipoDisco(models.Model):
     codigo_disco = models.AutoField(primary_key=True)
+    codigo = models.IntegerField(blank=True, null=True)
     descripcion = models.CharField(max_length=100)
 
     class Meta:
@@ -483,6 +532,7 @@ class TipoDisco(models.Model):
 
 class TipoEquipo(models.Model):
     codigo_tipo = models.AutoField(primary_key=True)
+    codigo = models.IntegerField(blank=True, null=True)
     descripcion = models.CharField(max_length=100)
 
     class Meta:
@@ -501,6 +551,48 @@ class TipoMantenimiento(models.Model):
     class Meta:
         managed = True
         db_table = 'tipo_mantenimiento'
+        ordering = ['descripcion']
+
+    def __str__(self):
+        return self.descripcion
+
+
+class TamanoDiscoCatalogo(models.Model):
+    id = models.AutoField(primary_key=True)
+    codigo = models.IntegerField(blank=True, null=True)
+    descripcion = models.CharField(max_length=150)
+
+    class Meta:
+        managed = True
+        db_table = 'tamano_disco_catalogo'
+        ordering = ['descripcion']
+
+    def __str__(self):
+        return self.descripcion
+
+
+class MarcaMonitorCatalogo(models.Model):
+    id = models.AutoField(primary_key=True)
+    codigo = models.IntegerField(blank=True, null=True)
+    descripcion = models.CharField(max_length=150)
+
+    class Meta:
+        managed = True
+        db_table = 'marca_monitor_catalogo'
+        ordering = ['descripcion']
+
+    def __str__(self):
+        return self.descripcion
+
+
+class PulgadaMonitorCatalogo(models.Model):
+    id = models.AutoField(primary_key=True)
+    codigo = models.IntegerField(blank=True, null=True)
+    descripcion = models.CharField(max_length=150)
+
+    class Meta:
+        managed = True
+        db_table = 'pulgada_monitor_catalogo'
         ordering = ['descripcion']
 
     def __str__(self):

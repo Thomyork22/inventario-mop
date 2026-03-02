@@ -17,6 +17,12 @@ export default function NuevoEquipoModal({ open, onClose, catalogos, onCreated }
   const marcas = catalogos?.marcas ?? [];
   const estados = catalogos?.estados ?? [];
   const ubicaciones = catalogos?.ubicaciones ?? [];
+  const condiciones = catalogos?.condiciones ?? [];
+  const ramCatalogo = catalogos?.ram ?? [];
+  const procesadores = catalogos?.procesadores ?? [];
+  const sistemasOperativos = catalogos?.sistemasOperativos ?? [];
+  const tiposDisco = catalogos?.tiposDisco ?? [];
+  const tamanosDisco = catalogos?.tamanosDisco ?? [];
 
   const estadoLibreDefault = useMemo(() => {
     const x = estados.find((e) => (e.descripcion || "").toLowerCase().includes("libre"));
@@ -32,6 +38,12 @@ export default function NuevoEquipoModal({ open, onClose, catalogos, onCreated }
     codigo_tipo_id: "",
     codigo_marca_id: "",
     codigo_estado_id: "",
+    codigo_condicion_id: "",
+    codigo_ram_id: "",
+    codigo_procesador_id: "",
+    codigo_so_id: "",
+    codigo_disco_id: "",
+    tamano_disco_id: "",
     id_ubicacion_id: "",
 
     fecha_compra: "",
@@ -65,6 +77,12 @@ export default function NuevoEquipoModal({ open, onClose, catalogos, onCreated }
       codigo_tipo_id: "",
       codigo_marca_id: "",
       codigo_estado_id: estadoLibreDefault || "",
+      codigo_condicion_id: "",
+      codigo_ram_id: "",
+      codigo_procesador_id: "",
+      codigo_so_id: "",
+      codigo_disco_id: "",
+      tamano_disco_id: "",
       id_ubicacion_id: "",
       fecha_compra: "",
       fecha_ingreso_inventario: todayISO(),
@@ -103,6 +121,12 @@ export default function NuevoEquipoModal({ open, onClose, catalogos, onCreated }
         codigo_tipo_id: form.codigo_tipo_id === "" ? null : Number(form.codigo_tipo_id),
         codigo_marca_id: form.codigo_marca_id === "" ? null : Number(form.codigo_marca_id),
         codigo_estado_id: form.codigo_estado_id === "" ? null : Number(form.codigo_estado_id),
+        codigo_condicion_id: form.codigo_condicion_id === "" ? null : Number(form.codigo_condicion_id),
+        codigo_ram_id: form.codigo_ram_id === "" ? null : Number(form.codigo_ram_id),
+        codigo_procesador_id: form.codigo_procesador_id === "" ? null : Number(form.codigo_procesador_id),
+        codigo_so_id: form.codigo_so_id === "" ? null : Number(form.codigo_so_id),
+        codigo_disco_id: form.codigo_disco_id === "" ? null : Number(form.codigo_disco_id),
+        tamano_disco_id: form.tamano_disco_id === "" ? null : Number(form.tamano_disco_id),
         id_ubicacion_id: form.id_ubicacion_id === "" ? null : Number(form.id_ubicacion_id),
 
         // opcionales
@@ -246,6 +270,96 @@ export default function NuevoEquipoModal({ open, onClose, catalogos, onCreated }
               </select>
             </Field>
 
+            <Field label="Condición">
+              <select
+                className="select"
+                value={form.codigo_condicion_id}
+                onChange={(e) => setField("codigo_condicion_id", e.target.value)}
+              >
+                <option value="">—</option>
+                {condiciones.map((x) => (
+                  <option key={x.codigo_condicion} value={x.codigo_condicion}>
+                    {x.descripcion}
+                  </option>
+                ))}
+              </select>
+            </Field>
+
+            <Field label="RAM">
+              <select
+                className="select"
+                value={form.codigo_ram_id}
+                onChange={(e) => setField("codigo_ram_id", e.target.value)}
+              >
+                <option value="">—</option>
+                {ramCatalogo.map((x) => (
+                  <option key={x.codigo_ram} value={x.codigo_ram}>
+                    {x.descripcion}
+                  </option>
+                ))}
+              </select>
+            </Field>
+
+            <Field label="Procesador">
+              <select
+                className="select"
+                value={form.codigo_procesador_id}
+                onChange={(e) => setField("codigo_procesador_id", e.target.value)}
+              >
+                <option value="">—</option>
+                {procesadores.map((x) => (
+                  <option key={x.codigo_procesador} value={x.codigo_procesador}>
+                    {x.descripcion}
+                  </option>
+                ))}
+              </select>
+            </Field>
+
+            <Field label="S.O">
+              <select
+                className="select"
+                value={form.codigo_so_id}
+                onChange={(e) => setField("codigo_so_id", e.target.value)}
+              >
+                <option value="">—</option>
+                {sistemasOperativos.map((x) => (
+                  <option key={x.codigo_so} value={x.codigo_so}>
+                    {x.descripcion || x.nombre}
+                  </option>
+                ))}
+              </select>
+            </Field>
+
+            <Field label="Tamaño disco">
+              <select
+                className="select"
+                value={form.tamano_disco_id}
+                onChange={(e) => setField("tamano_disco_id", e.target.value)}
+              >
+                <option value="">—</option>
+                {tamanosDisco.map((x) => (
+                  <option key={x.id} value={x.id}>
+                    {x.descripcion}
+                  </option>
+                ))}
+              </select>
+            </Field>
+
+            <Field label="Tipo disco">
+              <select
+                className="select"
+                value={form.codigo_disco_id}
+                onChange={(e) => setField("codigo_disco_id", e.target.value)}
+              >
+                <option value="">—</option>
+                {tiposDisco.map((x) => (
+                  <option key={x.codigo_disco} value={x.codigo_disco}>
+                    {x.descripcion}
+                  </option>
+                ))}
+              </select>
+            </Field>
+
             <Field label="Fecha compra">
               <input
                 className="input"
@@ -301,7 +415,6 @@ export default function NuevoEquipoModal({ open, onClose, catalogos, onCreated }
 
             <Field label="Observaciones">
               <textarea
-                className="modal-textarea"
                 className="input"
                 value={form.observaciones}
                 onChange={(e) => setField("observaciones", e.target.value)}

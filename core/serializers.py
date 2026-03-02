@@ -1,13 +1,20 @@
 from rest_framework import serializers
 
 from .models import (
-    Equipo, Marca, TipoEquipo, EstadoEquipo,
+    Equipo, Marca, TipoEquipo, EstadoEquipo, CondicionEquipo,
     Ubicacion, Region,
     AsignacionEquipo, Funcionario,
     HistorialEstadoEquipo,
     Mantenimiento,
     TipoMantenimiento,
     EstadoMantenimiento,
+    Ram,
+    Procesador,
+    SistemaOperativo,
+    TipoDisco,
+    TamanoDiscoCatalogo,
+    MarcaMonitorCatalogo,
+    PulgadaMonitorCatalogo,
 )
 
 # -----------------------------
@@ -17,19 +24,67 @@ from .models import (
 class MarcaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Marca
-        fields = ["codigo_marca", "descripcion", "pais_origen"]
+        fields = ["codigo_marca", "codigo", "descripcion", "pais_origen"]
 
 
 class TipoEquipoSerializer(serializers.ModelSerializer):
     class Meta:
         model = TipoEquipo
-        fields = ["codigo_tipo", "descripcion"]
+        fields = ["codigo_tipo", "codigo", "descripcion"]
 
 
 class EstadoEquipoSerializer(serializers.ModelSerializer):
     class Meta:
         model = EstadoEquipo
-        fields = ["codigo_estado", "descripcion", "permite_asignacion"]
+        fields = ["codigo_estado", "codigo", "descripcion", "permite_asignacion"]
+
+
+class CondicionEquipoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CondicionEquipo
+        fields = ["codigo_condicion", "codigo", "descripcion"]
+
+
+class RamSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ram
+        fields = ["codigo_ram", "codigo", "descripcion"]
+
+
+class ProcesadorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Procesador
+        fields = ["codigo_procesador", "codigo", "descripcion"]
+
+
+class SistemaOperativoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SistemaOperativo
+        fields = ["codigo_so", "codigo", "descripcion", "nombre"]
+
+
+class TipoDiscoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TipoDisco
+        fields = ["codigo_disco", "codigo", "descripcion"]
+
+
+class TamanoDiscoCatalogoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TamanoDiscoCatalogo
+        fields = ["id", "codigo", "descripcion"]
+
+
+class MarcaMonitorCatalogoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MarcaMonitorCatalogo
+        fields = ["id", "codigo", "descripcion"]
+
+
+class PulgadaMonitorCatalogoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PulgadaMonitorCatalogo
+        fields = ["id", "codigo", "descripcion"]
 
 
 class RegionSerializer(serializers.ModelSerializer):
@@ -76,6 +131,12 @@ class EquipoReadSerializer(serializers.ModelSerializer):
     tipo_equipo = TipoEquipoSerializer(source="codigo_tipo", read_only=True)
     marca = MarcaSerializer(source="codigo_marca", read_only=True)
     estado = EstadoEquipoSerializer(source="codigo_estado", read_only=True)
+    condicion = CondicionEquipoSerializer(source="codigo_condicion", read_only=True)
+    ram = RamSerializer(source="codigo_ram", read_only=True)
+    procesador = ProcesadorSerializer(source="codigo_procesador", read_only=True)
+    sistema_operativo = SistemaOperativoSerializer(source="codigo_so", read_only=True)
+    tipo_disco = TipoDiscoSerializer(source="codigo_disco", read_only=True)
+    tamano_disco_catalogo = TamanoDiscoCatalogoSerializer(source="tamano_disco", read_only=True)
     ubicacion = UbicacionSerializer(source="id_ubicacion", read_only=True)
 
     class Meta:
@@ -104,6 +165,12 @@ class EquipoReadSerializer(serializers.ModelSerializer):
             "tipo_equipo",
             "marca",
             "estado",
+            "condicion",
+            "ram",
+            "procesador",
+            "sistema_operativo",
+            "tipo_disco",
+            "tamano_disco_catalogo",
             "ubicacion",
 
             # otros FKs (como ID)
@@ -111,6 +178,7 @@ class EquipoReadSerializer(serializers.ModelSerializer):
             "codigo_procesador",
             "codigo_so",
             "codigo_disco",
+            "tamano_disco",
             "codigo_condicion",
             "codigo_tipo_adquisicion",
             "creado_por",
@@ -131,6 +199,24 @@ class EquipoWriteSerializer(serializers.ModelSerializer):
     )
     codigo_estado_id = serializers.PrimaryKeyRelatedField(
         source="codigo_estado", queryset=EstadoEquipo.objects.all(), required=False, allow_null=True
+    )
+    codigo_condicion_id = serializers.PrimaryKeyRelatedField(
+        source="codigo_condicion", queryset=CondicionEquipo.objects.all(), required=False, allow_null=True
+    )
+    codigo_ram_id = serializers.PrimaryKeyRelatedField(
+        source="codigo_ram", queryset=Ram.objects.all(), required=False, allow_null=True
+    )
+    codigo_procesador_id = serializers.PrimaryKeyRelatedField(
+        source="codigo_procesador", queryset=Procesador.objects.all(), required=False, allow_null=True
+    )
+    codigo_so_id = serializers.PrimaryKeyRelatedField(
+        source="codigo_so", queryset=SistemaOperativo.objects.all(), required=False, allow_null=True
+    )
+    codigo_disco_id = serializers.PrimaryKeyRelatedField(
+        source="codigo_disco", queryset=TipoDisco.objects.all(), required=False, allow_null=True
+    )
+    tamano_disco_id = serializers.PrimaryKeyRelatedField(
+        source="tamano_disco", queryset=TamanoDiscoCatalogo.objects.all(), required=False, allow_null=True
     )
     id_ubicacion_id = serializers.PrimaryKeyRelatedField(
         source="id_ubicacion", queryset=Ubicacion.objects.all(), required=False, allow_null=True
@@ -159,14 +245,15 @@ class EquipoWriteSerializer(serializers.ModelSerializer):
             "codigo_tipo_id",
             "codigo_marca_id",
             "codigo_estado_id",
+            "codigo_condicion_id",
+            "codigo_ram_id",
+            "codigo_procesador_id",
+            "codigo_so_id",
+            "codigo_disco_id",
+            "tamano_disco_id",
             "id_ubicacion_id",
 
             # otros FK por ahora como IDs directos (de tu modelo)
-            "codigo_ram",
-            "codigo_procesador",
-            "codigo_so",
-            "codigo_disco",
-            "codigo_condicion",
             "codigo_tipo_adquisicion",
             "creado_por",
             "actualizado_por",
