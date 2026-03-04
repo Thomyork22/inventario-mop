@@ -869,6 +869,123 @@ td {
   line-height: 1.4;
 }
 
+.eq-detail-raw-col {
+  grid-column: 1 / -1;
+}
+
+.eq-detail-backdrop {
+  padding: clamp(10px, 2vw, 18px);
+}
+
+.eq-detail-modal {
+  width: min(1120px, calc(100vw - 20px));
+  max-height: min(88vh, 940px);
+  display: flex;
+  flex-direction: column;
+}
+
+.eq-detail-header,
+.eq-detail-footer {
+  flex-shrink: 0;
+}
+
+.eq-detail-body {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  overflow: auto;
+  max-height: calc(88vh - 144px);
+}
+
+.eq-detail-raw-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.eq-detail-toggle-btn {
+  border: 1px solid var(--border-soft);
+  background: var(--panel);
+  color: var(--text-strong);
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.eq-detail-raw-preview {
+  margin-top: 8px;
+  border: 1px dashed var(--border-soft);
+  background: color-mix(in srgb, var(--card) 84%, transparent);
+  border-radius: 12px;
+  padding: 12px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.eq-detail-raw-list {
+  display: grid;
+  gap: 8px;
+  max-height: 260px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.eq-detail-raw-item {
+  border: 1px solid var(--border-soft);
+  background: var(--card);
+  border-radius: 12px;
+  padding: 10px;
+}
+
+.eq-detail-raw-key {
+  font-size: 11px;
+  font-weight: 900;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.eq-detail-raw-value {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--text-strong);
+  font-weight: 700;
+  word-break: break-word;
+}
+
+@media (max-width: 980px) {
+  .eq-detail-modal {
+    width: min(100%, calc(100vw - 16px));
+    max-height: calc(100vh - 16px);
+  }
+
+  .eq-detail-body {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-height: calc(100vh - 144px);
+  }
+}
+
+@media (max-width: 720px) {
+  .eq-detail-body {
+    grid-template-columns: 1fr;
+  }
+
+  .eq-detail-raw-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .eq-detail-toggle-btn {
+    width: 100%;
+  }
+}
+
 .dash-kpi-card.is-warn {
   border-color: #fed7aa;
   background: #fff7ed;

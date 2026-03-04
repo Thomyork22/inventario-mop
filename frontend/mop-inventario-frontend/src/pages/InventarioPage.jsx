@@ -487,7 +487,7 @@ export default function InventarioPage() {
               <tr>
                 <th className="th">Inventario</th>
                 <th className="th">Serie</th>
-                <th className="th">Modelo</th>
+                <th className="th">Equipo</th>
                 <th className="th">Tipo</th>
                 <th className="th">Marca</th>
                 <th className="th">Estado</th>
@@ -521,20 +521,59 @@ export default function InventarioPage() {
                       </div>
                     </td>
 
-                    <td className="td">{e.modelo || "-"}</td>
-                    <td className="td">{e.tipo_equipo?.descripcion || "-"}</td>
-                    <td className="td">{e.marca?.descripcion || "-"}</td>
+                    <td className="td">
+                      <div className="u-fw-700 u-text-strong">
+                        {firstPresent(
+                          e.nombre_equipo,
+                          readExcelField(e, "NOMBRE DE EQUIPO"),
+                          e.modelo,
+                          "-"
+                        )}
+                      </div>
+                      <div className="mini">
+                        {firstPresent(
+                          e.ip_maquina,
+                          readExcelField(e, "IP DE MAQUINA"),
+                          "Sin IP"
+                        )}
+                      </div>
+                    </td>
+                    <td className="td">
+                      {firstPresent(
+                        e.tipo_equipo?.descripcion,
+                        readExcelField(e, "TIPO EQUIPO  1/2/OTRO"),
+                        "-"
+                      )}
+                    </td>
+                    <td className="td">
+                      {firstPresent(
+                        e.marca?.descripcion,
+                        readExcelField(e, "MARCA"),
+                        "-"
+                      )}
+                    </td>
 
                     <td className="td">
-                      <span className={estadoPillClass(e.estado?.descripcion)}>
-                        {e.estado?.descripcion || "-"}
+                      <span className={estadoPillClass(firstPresent(e.estado?.descripcion, readExcelField(e, "Estado Actual   ASIGNADO/ BODEGA /EXTRAVIADO/ROBO")))}>
+                        {firstPresent(
+                          e.estado?.descripcion,
+                          readExcelField(e, "Estado Actual   ASIGNADO/ BODEGA /EXTRAVIADO/ROBO"),
+                          "-"
+                        )}
                       </span>
                     </td>
 
                     <td className="td">
-                      {e.ubicacion?.nombre_sede || "-"}
+                      {firstPresent(
+                        e.ubicacion?.nombre_sede,
+                        inferSedeFromText(firstPresent(e.direccion_oficina_piso, readExcelField(e, "DIRECCIÓN OFICINA / PISO"))),
+                        "-"
+                      )}
                       <div className="mini">
-                        {e.ubicacion?.region?.nombre ? `Región: ${e.ubicacion.region.nombre}` : ""}
+                        {firstPresent(
+                          e.ubicacion?.region?.nombre ? `Región: ${e.ubicacion.region.nombre}` : "",
+                          readExcelField(e, "REGIÓN")
+                        )}
                       </div>
                     </td>
 
@@ -561,4 +600,36 @@ function estadoPillClass(label) {
   if (l.includes("libre") || l.includes("dispon")) return `${base} is-libre`;
   if (l.includes("baja")) return `${base} is-baja`;
   return base;
+}
+
+function firstPresent(...values) {
+  for (const value of values) {
+    if (value === null || value === undefined) continue;
+    if (typeof value === "string" && value.trim() === "") continue;
+    return value;
+  }
+  return "";
+}
+
+function readExcelField(equipo, key) {
+  const value = equipo?.raw_excel_data?.[key];
+  if (value === null || value === undefined) return "";
+  if (typeof value === "string" && value.trim() === "") return "";
+  return String(value);
+}
+
+function inferSedeFromText(value) {
+  const text = String(value || "")
+    .trim()
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ");
+
+  if (!text) return "";
+  if (text.includes("ANIMAS")) return "Ánimas";
+  if (text.includes("YUNGAY")) return "Yungay";
+  if (text.includes("LA UNION")) return "La Unión";
+  if (text.includes("BOUCHEFF") || text.includes("BOUCHEF")) return "Bouchéff";
+  return "";
 }

@@ -96,6 +96,16 @@ export default function FuncionariosPage() {
 
   const totalPages = useMemo(() => Math.max(Math.ceil((count || 0) / pageSize), 1), [count]);
 
+  function isImportedPlaceholderEmail(value) {
+    return typeof value === "string" && value.trim().toLowerCase().endsWith("@import.local");
+  }
+
+  function displayEmail(value) {
+    if (!value) return "—";
+    if (isImportedPlaceholderEmail(value)) return "Sin correo importado";
+    return value;
+  }
+
   function openNewModal() {
     setFormErr("");
     setForm({
@@ -375,7 +385,7 @@ export default function FuncionariosPage() {
                         <div className="u-fs-12 u-text-muted">{f.rut || "Sin RUT"}</div>
                       </td>
 
-                      <td className="td">{f.email_institucional || "—"}</td>
+                      <td className="td">{displayEmail(f.email_institucional)}</td>
 
                       <td className="td">
                         <span className={f.activo ? "pillOk" : "pillBad"}>{f.activo ? "Activo" : "Inactivo"}</span>
@@ -493,7 +503,7 @@ export default function FuncionariosPage() {
               <div>
                 <div className="modalTitle">{active.nombre_completo || "Funcionario"}</div>
                 <div className="modalSub">
-                  {active.rut || "—"} · {active.email_institucional || "—"}
+                  {active.rut || "—"} · {displayEmail(active.email_institucional)}
                 </div>
               </div>
               <button className="iconBtn" onClick={() => setOpenView(false)} title="Cerrar">
