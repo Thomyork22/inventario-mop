@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { api } from "../api/api";
+import { api, getApiErrorMessage } from "../api/api";
 import { useCatalogos } from "../catalogos/CatalogosContext.jsx";
 import { useTheme } from "../global/useTheme";
 
@@ -40,7 +40,7 @@ export default function ConfiguracionPage() {
       const res = await api.get("/me/");
       setMe(res.data);
     } catch (e) {
-      setMeErr(e?.response?.data?.detail || e?.message || "No se pudo cargar /me/");
+      setMeErr(getApiErrorMessage(e, "No se pudo cargar /me/."));
     }
   }
 
@@ -76,7 +76,7 @@ export default function ConfiguracionPage() {
       setPingMsg("Conexion OK (dashboard/stats respondio)");
     } catch (e) {
       setPingStatus("err");
-      setPingMsg(e?.response?.data?.detail || e?.message || "Fallo la conexion");
+      setPingMsg(getApiErrorMessage(e, "Falló la conexión."));
     }
   }
 
@@ -131,13 +131,7 @@ export default function ConfiguracionPage() {
       setImportProgress(100);
       setImportStatus("err");
       setImportSummary(null);
-      const data = e?.response?.data;
-      setImportErr(
-        data?.error ||
-        data?.detail ||
-        e?.message ||
-        "No se pudo importar el inventario."
-      );
+      setImportErr(getApiErrorMessage(e, "No se pudo importar el inventario."));
     } finally {
       if (progressTimer) window.clearInterval(progressTimer);
       window.setTimeout(() => {
@@ -167,13 +161,7 @@ export default function ConfiguracionPage() {
       );
     } catch (e) {
       setRollbackStatus("err");
-      const data = e?.response?.data;
-      setRollbackMsg(
-        data?.error ||
-        data?.detail ||
-        e?.message ||
-        "No se pudo revertir la importación."
-      );
+      setRollbackMsg(getApiErrorMessage(e, "No se pudo revertir la importación."));
     }
   }
 

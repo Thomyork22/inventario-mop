@@ -1,4 +1,4 @@
-import { api } from "./api";
+import { api, getApiErrorMessage } from "./api";
 
 export const CATALOG_ENDPOINTS = {
   condiciones: "/catalogos/condiciones-equipo/",
@@ -22,17 +22,36 @@ export function pickList(payload) {
   return Array.isArray(list) ? list : [];
 }
 
+async function fetchAllCatalogPages(url) {
+  const aggregated = [];
+  let nextUrl = url;
+  let page = 1;
+
+  while (nextUrl) {
+    const response = await api.get(nextUrl, {
+      params: page === 1 ? { page_size: 5000 } : undefined,
+    });
+    const payload = response.data;
+    const currentItems = pickList(payload);
+    aggregated.push(...currentItems);
+
+    const next = payload?.next;
+    if (!next) break;
+    nextUrl = next;
+    page += 1;
+  }
+
+  return aggregated;
+}
+
 export async function loadCatalogos() {
   const entries = await Promise.all(
     Object.entries(CATALOG_ENDPOINTS).map(async ([key, url]) => {
       try {
-        const response = await api.get(url);
-        return [key, pickList(response.data), null];
+        const list = await fetchAllCatalogPages(url);
+        return [key, list, null];
       } catch (error) {
-        const message =
-          error?.response?.data?.detail ||
-          error?.message ||
-          `No se pudo cargar ${key}.`;
+        const message = getApiErrorMessage(error, `No se pudo cargar ${key}.`);
         return [key, [], message];
       }
     })

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { api } from "../api/api";
+import { api, getApiErrorMessage } from "../api/api";
 import { useCatalogos } from "../catalogos/CatalogosContext.jsx";
 
 export default function MantencionesPage() {
@@ -141,7 +141,7 @@ export default function MantencionesPage() {
       setRows(viewList);
       setCount(total);
     } catch (e) {
-      setErr(e?.response?.data?.detail || e?.message || "Error cargando mantenciones");
+      setErr(getApiErrorMessage(e, "Error cargando mantenciones."));
     } finally {
       setLoading(false);
     }
@@ -213,7 +213,7 @@ export default function MantencionesPage() {
         const msg = Array.isArray(data[firstKey]) ? data[firstKey][0] : String(data[firstKey]);
         setFormErr(msg || "No se pudo crear la mantención.");
       } else {
-        setFormErr(e?.message || "No se pudo crear la mantención.");
+        setFormErr(getApiErrorMessage(e, "No se pudo crear la mantención."));
       }
     } finally {
       setSaving(false);
@@ -329,7 +329,7 @@ export default function MantencionesPage() {
         const msg = Array.isArray(data[firstKey]) ? data[firstKey][0] : String(data[firstKey]);
         setEditErr(msg || "No se pudo guardar.");
       } else {
-        setEditErr(e?.message || "No se pudo guardar.");
+        setEditErr(getApiErrorMessage(e, "No se pudo guardar."));
       }
     } finally {
       setEditSaving(false);

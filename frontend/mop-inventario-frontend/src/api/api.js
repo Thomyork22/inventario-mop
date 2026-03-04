@@ -4,6 +4,31 @@ const baseURL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
 
 export const api = axios.create({ baseURL });
 
+export function getApiErrorMessage(error, fallback = "Ocurrió un error inesperado.") {
+  const status = error?.response?.status;
+  const detail =
+    error?.response?.data?.detail ||
+    error?.response?.data?.message ||
+    error?.response?.data?.error;
+
+  if (typeof detail === "string" && detail.trim()) {
+    return detail;
+  }
+  if (status === 401) {
+    return "Tu sesión expiró o no es válida. Vuelve a iniciar sesión.";
+  }
+  if (status === 403) {
+    return "No tienes permisos para realizar esta acción.";
+  }
+  if (status >= 500) {
+    return "Error interno del servidor. Revisa backend y vuelve a intentar.";
+  }
+  if (error?.message) {
+    return error.message;
+  }
+  return fallback;
+}
+
 /* =========================
    REQUEST: enviar access
 ========================= */

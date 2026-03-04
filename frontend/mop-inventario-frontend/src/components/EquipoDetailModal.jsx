@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 const SHARED_BRAND_MAP = {
   1: "OLIDATA",
@@ -154,6 +154,8 @@ export default function EquipoDetailModal({
   onEdit,
 }) {
   const [showRawData, setShowRawData] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(60);
+  const rawListRef = useRef(null);
 
   // Cerrar con ESC
   useEffect(() => {
@@ -168,12 +170,20 @@ export default function EquipoDetailModal({
   useEffect(() => {
     if (!open) {
       setShowRawData(false);
+      setVisibleCount(60);
     }
   }, [open]);
 
+  useEffect(() => {
+    if (!showRawData) return;
+    setVisibleCount(60);
+  }, [showRawData]);
+
   if (!open) return null;
 
-  const rawRows = Object.entries(equipo?.raw_excel_data || {})
+  const rawRows = useMemo(
+    () =>
+      Object.entries(equipo?.raw_excel_data || {})
     .filter(([key, value]) => {
       if (key === "__sheet_name" || key === "__excel_row") return false;
       if (!key || /^COLUMNA_\d+$/i.test(key)) return false;
@@ -181,7 +191,20 @@ export default function EquipoDetailModal({
       if (typeof value === "string" && value.trim() === "") return false;
       return true;
     })
-    .sort(([a], [b]) => rawFieldSort(a) - rawFieldSort(b) || normalizeRawKey(a).localeCompare(normalizeRawKey(b)));
+    .sort(([a], [b]) => rawFieldSort(a) - rawFieldSort(b) || normalizeRawKey(a).localeCompare(normalizeRawKey(b))),
+    [equipo]
+  );
+  const displayedRawRows = rawRows.slice(0, visibleCount);
+  const hasMoreRawRows = visibleCount < rawRows.length;
+
+  function onRawListScroll() {
+    if (!rawListRef.current || !hasMoreRawRows) return;
+    const { scrollTop, scrollHeight, clientHeight } = rawListRef.current;
+    const nearBottom = scrollTop + clientHeight >= scrollHeight - 30;
+    if (nearBottom) {
+      setVisibleCount((prev) => Math.min(prev + 60, rawRows.length));
+    }
+  }
 
   const tipoValue = firstPresent(
     equipo?.tipo_equipo?.descripcion,
@@ -293,8 +316,8 @@ export default function EquipoDetailModal({
                   </button>
                 </div>
                 {showRawData ? (
-                  <div className="eq-detail-raw-list">
-                    {rawRows.map(([key, value]) => (
+                  <div className="eq-detail-raw-list" ref={rawListRef} onScroll={onRawListScroll}>
+                    {displayedRawRows.map(([key, value]) => (
                       <div key={key} className="eq-detail-raw-item">
                         <div className="eq-detail-raw-key">{key}</div>
                         <div className="eq-detail-raw-value">
@@ -302,6 +325,11 @@ export default function EquipoDetailModal({
                         </div>
                       </div>
                     ))}
+                    {hasMoreRawRows ? (
+                      <div className="eq-detail-raw-more">
+                        Cargando más campos… ({displayedRawRows.length}/{rawRows.length})
+                      </div>
+                    ) : null}
                   </div>
                 ) : (
                   <div className="eq-detail-raw-preview">

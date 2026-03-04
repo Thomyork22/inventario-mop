@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { api } from "../api/api";
+import { api, getApiErrorMessage } from "../api/api";
 
 export default function FuncionariosPage() {
   // ---- data ----
@@ -83,7 +83,7 @@ export default function FuncionariosPage() {
       setRows(list);
       setCount(total);
     } catch (e) {
-      setErr(e?.response?.data?.detail || e?.message || "Error cargando funcionarios");
+      setErr(getApiErrorMessage(e, "Error cargando funcionarios."));
     } finally {
       setLoading(false);
     }
@@ -152,7 +152,7 @@ export default function FuncionariosPage() {
         const msg = Array.isArray(data[firstKey]) ? data[firstKey][0] : String(data[firstKey]);
         setFormErr(msg || "No se pudo crear el funcionario.");
       } else {
-        setFormErr(e?.message || "No se pudo crear el funcionario.");
+        setFormErr(getApiErrorMessage(e, "No se pudo crear el funcionario."));
       }
     } finally {
       setSaving(false);
@@ -237,7 +237,7 @@ export default function FuncionariosPage() {
         const msg = Array.isArray(data[firstKey]) ? data[firstKey][0] : String(data[firstKey]);
         setEditErr(msg || "No se pudo guardar.");
       } else {
-        setEditErr(e?.message || "No se pudo guardar.");
+        setEditErr(getApiErrorMessage(e, "No se pudo guardar."));
       }
     } finally {
       setEditSaving(false);
@@ -250,7 +250,7 @@ export default function FuncionariosPage() {
       await api.patch(`/funcionarios/${f.id_funcionario}/`, { activo: !Boolean(f.activo) });
       await loadFuncionarios(page);
     } catch (e) {
-      setErr(e?.response?.data?.detail || e?.message || "No se pudo cambiar estado.");
+      setErr(getApiErrorMessage(e, "No se pudo cambiar estado."));
     }
   }
 

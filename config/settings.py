@@ -150,8 +150,7 @@ REST_FRAMEWORK = {
     ),
 
     # Paginación (clave para frontend)
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
-    "PAGE_SIZE": 20,
+    "DEFAULT_PAGINATION_CLASS": "core.pagination.StandardResultsSetPagination",
 
     # Filtros / búsqueda / ordering
     "DEFAULT_FILTER_BACKENDS": (

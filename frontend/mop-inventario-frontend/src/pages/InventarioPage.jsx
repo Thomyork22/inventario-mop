@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { api } from "../api/api";
+import { api, getApiErrorMessage } from "../api/api";
 import { useCatalogos } from "../catalogos/CatalogosContext.jsx";
 import EquipoDetailModal from "../components/EquipoDetailModal.jsx";
 import AsignarDevolverModal from "../components/AsignarDevolverModal.jsx";
@@ -198,7 +198,7 @@ export default function InventarioPage() {
 
       setData(normalized);
     } catch (e) {
-      const msg = e?.response?.data?.detail || e?.message || "Error cargando equipos";
+      const msg = getApiErrorMessage(e, "Error cargando equipos.");
       setError(msg);
     } finally {
       setLoading(false);
@@ -248,7 +248,7 @@ export default function InventarioPage() {
         `Inventario vaciado. ${res.data?.equipos_eliminados ?? 0} equipo(s) eliminados.`
       );
     } catch (e) {
-      setError(e?.response?.data?.detail || e?.message || "No se pudo eliminar el inventario.");
+      setError(getApiErrorMessage(e, "No se pudo eliminar el inventario."));
     } finally {
       setClearingAll(false);
     }
