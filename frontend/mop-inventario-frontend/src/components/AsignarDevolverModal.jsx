@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { api } from "../api/api";
+import { api, getApiErrorMessage } from "../api/api";
 
 function todayISO() {
   const d = new Date();
@@ -82,7 +82,7 @@ export default function AsignarDevolverModal({
         setFuncionarios(fRes.data?.results ?? fRes.data ?? []);
       } catch (e) {
         console.error(e);
-        setErr(e?.response?.data?.detail || "Error cargando datos para asignación.");
+        setErr(getApiErrorMessage(e, "Error cargando datos para asignación."));
       }
     })();
   }, [open, equipo]);
@@ -131,12 +131,7 @@ export default function AsignarDevolverModal({
       onDone?.();
       onClose?.();
     } catch (e) {
-      const msg =
-        e?.response?.data?.detail ||
-        (typeof e?.response?.data === "object" ? JSON.stringify(e.response.data) : null) ||
-        e?.message ||
-        "No se pudo asignar.";
-      setErr(msg);
+      setErr(getApiErrorMessage(e, "No se pudo asignar."));
     } finally {
       setLoading(false);
     }
@@ -162,12 +157,7 @@ export default function AsignarDevolverModal({
       onDone?.();
       onClose?.();
     } catch (e) {
-      const msg =
-        e?.response?.data?.detail ||
-        (typeof e?.response?.data === "object" ? JSON.stringify(e.response.data) : null) ||
-        e?.message ||
-        "No se pudo devolver.";
-      setErr(msg);
+      setErr(getApiErrorMessage(e, "No se pudo devolver."));
     } finally {
       setLoading(false);
     }

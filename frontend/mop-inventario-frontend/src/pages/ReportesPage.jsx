@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { api } from "../api/api";
+import { api, getApiErrorMessage } from "../api/api";
 import { useCatalogos } from "../catalogos/CatalogosContext.jsx";
 
 export default function ReportesPage() {
@@ -69,7 +69,7 @@ export default function ReportesPage() {
 
       window.URL.revokeObjectURL(href);
     } catch (e) {
-      setErr(e?.response?.data?.detail || e?.message || "No se pudo descargar el reporte.");
+      setErr(getApiErrorMessage(e, "No se pudo descargar el reporte."));
     } finally {
       setDownloading(false);
     }
@@ -82,7 +82,7 @@ export default function ReportesPage() {
         <div>
           <h1 className="title">Reportes</h1>
           <div className="sub">
-            Descarga reportes en CSV o Excel (XLSX) con filtros básicos.
+            Descarga reportes en Excel (XLSX) con filtros básicos.
           </div>
         </div>
 
@@ -164,16 +164,15 @@ export default function ReportesPage() {
                 className="smallBtn"
                 onClick={() =>
                   downloadFile({
-                    url: "/reportes/inventario.csv",
-                    filename: "reporte_inventario.csv",
+                    url: "/reportes/inventario.pdf",
+                    filename: "reporte_inventario.pdf",
                     params: invParams,
                   })
                 }
                 disabled={downloading}
               >
-                Descargar CSV
+                Descargar PDF
               </button>
-
               <button
                 className="primaryBtn"
                 onClick={() =>
@@ -215,16 +214,15 @@ export default function ReportesPage() {
                 className="smallBtn"
                 onClick={() =>
                   downloadFile({
-                    url: "/reportes/asignaciones.csv",
-                    filename: "reporte_asignaciones.csv",
+                    url: "/reportes/asignaciones.pdf",
+                    filename: "reporte_asignaciones.pdf",
                     params: asigParams,
                   })
                 }
                 disabled={downloading}
               >
-                Descargar CSV
+                Descargar PDF
               </button>
-
               <button
                 className="primaryBtn"
                 onClick={() =>
@@ -257,16 +255,15 @@ export default function ReportesPage() {
                 className="smallBtn"
                 onClick={() =>
                   downloadFile({
-                    url: "/reportes/mantenimientos.csv",
-                    filename: "reporte_mantenimientos.csv",
+                    url: "/reportes/mantenimientos.pdf",
+                    filename: "reporte_mantenimientos.pdf",
                     params: {},
                   })
                 }
                 disabled={downloading}
               >
-                Descargar CSV
+                Descargar PDF
               </button>
-
               <button
                 className="primaryBtn"
                 onClick={() =>
@@ -320,16 +317,15 @@ export default function ReportesPage() {
                 className="smallBtn"
                 onClick={() =>
                   downloadFile({
-                    url: "/reportes/garantias.csv",
-                    filename: "reporte_garantias.csv",
+                    url: "/reportes/garantias.pdf",
+                    filename: "reporte_garantias.pdf",
                     params: garParams,
                   })
                 }
                 disabled={downloading}
               >
-                Descargar CSV
+                Descargar PDF
               </button>
-
               <button
                 className="primaryBtn"
                 onClick={() =>

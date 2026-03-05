@@ -2,8 +2,10 @@ import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
   Boxes,
+  Repeat,
   Wrench,
   Users,
+  BookOpenText,
   FileText,
   Settings,
 } from "lucide-react";
@@ -11,8 +13,10 @@ import {
 const items = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/inventario", label: "Inventario", icon: Boxes },
+  { to: "/asignaciones", label: "Asignaciones", icon: Repeat },
   { to: "/mantenciones", label: "Mantenciones", icon: Wrench },
   { to: "/funcionarios", label: "Funcionarios", icon: Users },
+  { to: "/catalogos", label: "Catálogos", icon: BookOpenText },
   { to: "/reportes", label: "Reportes", icon: FileText },
   { to: "/configuracion", label: "Configuración", icon: Settings },
 ];

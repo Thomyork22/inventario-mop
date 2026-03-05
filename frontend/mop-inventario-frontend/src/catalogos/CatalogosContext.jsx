@@ -17,6 +17,8 @@ const EMPTY = {
   sedes: [],
   tiposMantenimiento: [],
   estadosMantenimiento: [],
+  cargosFuncionario: [],
+  unidadesFuncionario: [],
 };
 
 const CatalogosContext = createContext(null);

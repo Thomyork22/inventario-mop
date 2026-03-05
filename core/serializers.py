@@ -15,6 +15,8 @@ from .models import (
     TamanoDiscoCatalogo,
     MarcaMonitorCatalogo,
     PulgadaMonitorCatalogo,
+    CargoFuncionario,
+    UnidadFuncionario,
 )
 
 # -----------------------------
@@ -121,6 +123,18 @@ class EstadoMantenimientoSerializer(serializers.ModelSerializer):
     class Meta:
         model = EstadoMantenimiento
         fields = ["codigo_estado_mantenimiento", "descripcion"]
+
+
+class CargoFuncionarioSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CargoFuncionario
+        fields = ["codigo_cargo", "descripcion", "nivel_jerarquico"]
+
+
+class UnidadFuncionarioSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UnidadFuncionario
+        fields = ["codigo_unidad", "descripcion", "sigla"]
 
 
 # -----------------------------
@@ -266,15 +280,51 @@ class EquipoWriteSerializer(serializers.ModelSerializer):
             "actualizado_por",
         ]
 
+    def validate_numero_inventario(self, value):
+        clean = (value or "").strip()
+        if not clean:
+            raise serializers.ValidationError("El número de inventario es obligatorio.")
+        if len(clean) < 3 or len(clean) > 50:
+            raise serializers.ValidationError("El número de inventario debe tener entre 3 y 50 caracteres.")
+        return clean.upper()
+
+    def validate_numero_serie(self, value):
+        clean = (value or "").strip()
+        if not clean:
+            raise serializers.ValidationError("El número de serie es obligatorio.")
+        if len(clean) < 3 or len(clean) > 100:
+            raise serializers.ValidationError("El número de serie debe tener entre 3 y 100 caracteres.")
+        return clean.upper()
+
+    def validate_garantia_meses(self, value):
+        if value is None:
+            return value
+        if value < 0 or value > 120:
+            raise serializers.ValidationError("La garantía en meses debe estar entre 0 y 120.")
+        return value
+
 
 # -----------------------------
 # Funcionario mini (lectura) -> lo dejo IGUAL
 # -----------------------------
 
 class FuncionarioMiniSerializer(serializers.ModelSerializer):
+    cargo = CargoFuncionarioSerializer(source="codigo_cargo", read_only=True)
+    unidad = UnidadFuncionarioSerializer(source="codigo_unidad", read_only=True)
+
     class Meta:
         model = Funcionario
-        fields = ["id_funcionario", "rut", "nombre_completo", "email_institucional", "activo"]
+        fields = [
+            "id_funcionario",
+            "rut",
+            "nombre_completo",
+            "email_institucional",
+            "activo",
+            "codigo_cargo",
+            "codigo_unidad",
+            "cargo",
+            "unidad",
+        ]
 
 
 
@@ -283,6 +333,9 @@ class FuncionarioMiniSerializer(serializers.ModelSerializer):
 # -----------------------------
 
 class FuncionarioReadSerializer(serializers.ModelSerializer):
+    cargo = CargoFuncionarioSerializer(source="codigo_cargo", read_only=True)
+    unidad = UnidadFuncionarioSerializer(source="codigo_unidad", read_only=True)
+
     class Meta:
         model = Funcionario
         fields = [
@@ -300,6 +353,8 @@ class FuncionarioReadSerializer(serializers.ModelSerializer):
             "fecha_creacion",
             "fecha_actualizacion",
             "raw_excel_data",
+            "cargo",
+            "unidad",
         ]
 
 
@@ -308,10 +363,18 @@ class FuncionarioReadSerializer(serializers.ModelSerializer):
 # -----------------------------
 
 class FuncionarioWriteSerializer(serializers.ModelSerializer):
-    # Importante: esto funciona si tu modelo tiene FK `codigo_cargo` y `codigo_unidad`
-    # (Django crea automáticamente los campos *_id).
-    codigo_cargo_id = serializers.IntegerField(required=False, allow_null=True)
-    codigo_unidad_id = serializers.IntegerField(required=False, allow_null=True)
+    codigo_cargo_id = serializers.PrimaryKeyRelatedField(
+        source="codigo_cargo",
+        queryset=CargoFuncionario.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+    codigo_unidad_id = serializers.PrimaryKeyRelatedField(
+        source="codigo_unidad",
+        queryset=UnidadFuncionario.objects.all(),
+        required=False,
+        allow_null=True,
+    )
 
     class Meta:
         model = Funcionario
@@ -327,6 +390,24 @@ class FuncionarioWriteSerializer(serializers.ModelSerializer):
             "fecha_salida",
             "activo",
         ]
+
+    def validate_rut(self, value):
+        clean = (value or "").strip().upper()
+        if len(clean) < 8 or len(clean) > 12:
+            raise serializers.ValidationError("El RUT debe tener entre 8 y 12 caracteres.")
+        return clean
+
+    def validate_telefono(self, value):
+        clean = (value or "").strip()
+        if not clean:
+            return clean
+        valid_chars = set("0123456789+ -()")
+        if any(ch not in valid_chars for ch in clean):
+            raise serializers.ValidationError("El teléfono solo permite dígitos y + - ( ).")
+        digits = "".join(ch for ch in clean if ch.isdigit())
+        if len(digits) < 7 or len(digits) > 15:
+            raise serializers.ValidationError("El teléfono debe tener entre 7 y 15 dígitos.")
+        return clean
 
 
 # -----------------------------
@@ -399,6 +480,14 @@ class AsignacionWriteSerializer(serializers.ModelSerializer):
         method = getattr(request, "method", "").upper()
 
         equipo = attrs.get("id_equipo") if "id_equipo" in attrs else getattr(self.instance, "id_equipo", None)
+        fecha_asignacion = attrs.get("fecha_asignacion", getattr(self.instance, "fecha_asignacion", None))
+        fecha_devolucion = attrs.get("fecha_devolucion", getattr(self.instance, "fecha_devolucion", None))
+
+        if fecha_asignacion and fecha_devolucion and fecha_devolucion < fecha_asignacion:
+            raise serializers.ValidationError(
+                {"fecha_devolucion": "La fecha de devolución no puede ser anterior a la fecha de asignación."}
+            )
+
         if equipo is None:
             return attrs
 
@@ -557,3 +646,24 @@ class MantenimientoWriteSerializer(serializers.ModelSerializer):
             "creado_por",
             "actualizado_por",
         ]
+
+    def validate(self, attrs):
+        fecha_solicitud = attrs.get("fecha_solicitud", getattr(self.instance, "fecha_solicitud", None))
+        fecha_ingreso = attrs.get("fecha_ingreso_taller", getattr(self.instance, "fecha_ingreso_taller", None))
+        fecha_salida = attrs.get("fecha_salida_taller", getattr(self.instance, "fecha_salida_taller", None))
+        fecha_entrega = attrs.get("fecha_entrega", getattr(self.instance, "fecha_entrega", None))
+
+        if fecha_solicitud and fecha_ingreso and fecha_ingreso < fecha_solicitud:
+            raise serializers.ValidationError(
+                {"fecha_ingreso_taller": "La fecha de ingreso al taller no puede ser anterior a la solicitud."}
+            )
+        if fecha_ingreso and fecha_salida and fecha_salida < fecha_ingreso:
+            raise serializers.ValidationError(
+                {"fecha_salida_taller": "La salida de taller no puede ser anterior al ingreso."}
+            )
+        if fecha_salida and fecha_entrega and fecha_entrega < fecha_salida:
+            raise serializers.ValidationError(
+                {"fecha_entrega": "La entrega no puede ser anterior a la salida de taller."}
+            )
+
+        return attrs

@@ -25,6 +25,8 @@ from .views import (
     TamanoDiscoCatalogoViewSet,
     MarcaMonitorCatalogoViewSet,
     PulgadaMonitorCatalogoViewSet,
+    CargoFuncionarioViewSet,
+    UnidadFuncionarioViewSet,
 
     # funcionarios
     FuncionarioViewSet,
@@ -37,14 +39,14 @@ from .views import (
 )
 
 from .reportes import (
-    ReporteInventarioCSV,
     ReporteInventarioXLSX,
-    ReporteAsignacionesCSV,
+    ReporteInventarioPDF,
     ReporteAsignacionesXLSX,
-    ReporteMantenimientosCSV,
+    ReporteAsignacionesPDF,
     ReporteMantenimientosXLSX,
-    ReporteGarantiasCSV,
+    ReporteMantenimientosPDF,
     ReporteGarantiasXLSX,
+    ReporteGarantiasPDF,
 )
 
 router = DefaultRouter()
@@ -76,6 +78,8 @@ router.register(
     EstadoMantenimientoViewSet,
     basename="catalogos-estados-mantenimiento",
 )
+router.register(r"catalogos/cargos-funcionario", CargoFuncionarioViewSet, basename="catalogos-cargos-funcionario")
+router.register(r"catalogos/unidades-funcionario", UnidadFuncionarioViewSet, basename="catalogos-unidades-funcionario")
 
 # funcionarios
 router.register(r"funcionarios", FuncionarioViewSet, basename="funcionarios")
@@ -88,17 +92,17 @@ urlpatterns = [
     path("inventario/clear/", ClearInventarioView.as_view(), name="clear-inventario"),
 
     # ===== Reportes =====
-    path("reportes/inventario.csv", ReporteInventarioCSV.as_view(), name="reporte-inventario-csv"),
     path("reportes/inventario.xlsx", ReporteInventarioXLSX.as_view(), name="reporte-inventario-xlsx"),
+    path("reportes/inventario.pdf", ReporteInventarioPDF.as_view(), name="reporte-inventario-pdf"),
 
-    path("reportes/asignaciones.csv", ReporteAsignacionesCSV.as_view(), name="reporte-asignaciones-csv"),
     path("reportes/asignaciones.xlsx", ReporteAsignacionesXLSX.as_view(), name="reporte-asignaciones-xlsx"),
+    path("reportes/asignaciones.pdf", ReporteAsignacionesPDF.as_view(), name="reporte-asignaciones-pdf"),
 
-    path("reportes/mantenimientos.csv", ReporteMantenimientosCSV.as_view(), name="reporte-mantenimientos-csv"),
     path("reportes/mantenimientos.xlsx", ReporteMantenimientosXLSX.as_view(), name="reporte-mantenimientos-xlsx"),
+    path("reportes/mantenimientos.pdf", ReporteMantenimientosPDF.as_view(), name="reporte-mantenimientos-pdf"),
 
-    path("reportes/garantias.csv", ReporteGarantiasCSV.as_view(), name="reporte-garantias-csv"),
     path("reportes/garantias.xlsx", ReporteGarantiasXLSX.as_view(), name="reporte-garantias-xlsx"),
+    path("reportes/garantias.pdf", ReporteGarantiasPDF.as_view(), name="reporte-garantias-pdf"),
 ]
 
 urlpatterns += router.urls

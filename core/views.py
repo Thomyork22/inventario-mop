@@ -12,6 +12,7 @@ from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.permissions import SAFE_METHODS
 
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
@@ -44,6 +45,8 @@ from .models import (
     TamanoDiscoCatalogo,
     MarcaMonitorCatalogo,
     PulgadaMonitorCatalogo,
+    CargoFuncionario,
+    UnidadFuncionario,
 )
 
 from .serializers import (
@@ -78,12 +81,26 @@ from .serializers import (
     TamanoDiscoCatalogoSerializer,
     MarcaMonitorCatalogoSerializer,
     PulgadaMonitorCatalogoSerializer,
+    CargoFuncionarioSerializer,
+    UnidadFuncionarioSerializer,
 
     # funcionarios
     FuncionarioMiniSerializer,
     FuncionarioReadSerializer,
     FuncionarioWriteSerializer,
 )
+
+class CatalogoEditableViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated, IsInMopInventarioGroup]
+    filter_backends = [SearchFilter, OrderingFilter]
+    search_fields = ["descripcion"]
+    ordering_fields = ["descripcion"]
+    ordering = ["descripcion"]
+
+    def get_permissions(self):
+        if self.request.method in SAFE_METHODS:
+            return [perm() for perm in [IsAuthenticated, IsInMopInventarioGroup]]
+        return [perm() for perm in [IsAuthenticated, IsAdminImportUser]]
 
 
 class EquipoViewSet(viewsets.ModelViewSet):
@@ -315,28 +332,24 @@ class MantenimientoViewSet(viewsets.ModelViewSet):
         return mant
 
 
-# -------- Catálogos (solo lectura) --------
+# -------- Catálogos (CRUD) --------
 
-class MarcaViewSet(viewsets.ReadOnlyModelViewSet):
-    permission_classes = [IsAuthenticated, IsInMopInventarioGroup]
+class MarcaViewSet(CatalogoEditableViewSet):
     queryset = Marca.objects.all().order_by("descripcion")
     serializer_class = MarcaSerializer
 
 
-class TipoEquipoViewSet(viewsets.ReadOnlyModelViewSet):
-    permission_classes = [IsAuthenticated, IsInMopInventarioGroup]
+class TipoEquipoViewSet(CatalogoEditableViewSet):
     queryset = TipoEquipo.objects.all().order_by("descripcion")
     serializer_class = TipoEquipoSerializer
 
 
-class EstadoEquipoViewSet(viewsets.ReadOnlyModelViewSet):
-    permission_classes = [IsAuthenticated, IsInMopInventarioGroup]
+class EstadoEquipoViewSet(CatalogoEditableViewSet):
     queryset = EstadoEquipo.objects.all().order_by("descripcion")
     serializer_class = EstadoEquipoSerializer
 
 
-class CondicionEquipoViewSet(viewsets.ReadOnlyModelViewSet):
-    permission_classes = [IsAuthenticated, IsInMopInventarioGroup]
+class CondicionEquipoViewSet(CatalogoEditableViewSet):
     queryset = CondicionEquipo.objects.all().order_by("descripcion")
     serializer_class = CondicionEquipoSerializer
 
@@ -347,64 +360,74 @@ class RegionViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = RegionSerializer
 
 
-class UbicacionViewSet(viewsets.ReadOnlyModelViewSet):
-    permission_classes = [IsAuthenticated, IsInMopInventarioGroup]
+class UbicacionViewSet(CatalogoEditableViewSet):
     queryset = Ubicacion.objects.all().order_by("nombre_sede")
     serializer_class = UbicacionSerializer
+    search_fields = ["nombre_sede", "direccion", "oficina", "piso"]
+    ordering_fields = ["nombre_sede", "id_ubicacion"]
+    ordering = ["nombre_sede"]
 
 
-class RamViewSet(viewsets.ReadOnlyModelViewSet):
-    permission_classes = [IsAuthenticated, IsInMopInventarioGroup]
+class RamViewSet(CatalogoEditableViewSet):
     queryset = Ram.objects.all().order_by("descripcion")
     serializer_class = RamSerializer
 
 
-class ProcesadorViewSet(viewsets.ReadOnlyModelViewSet):
-    permission_classes = [IsAuthenticated, IsInMopInventarioGroup]
+class ProcesadorViewSet(CatalogoEditableViewSet):
     queryset = Procesador.objects.all().order_by("descripcion")
     serializer_class = ProcesadorSerializer
 
 
-class SistemaOperativoViewSet(viewsets.ReadOnlyModelViewSet):
-    permission_classes = [IsAuthenticated, IsInMopInventarioGroup]
+class SistemaOperativoViewSet(CatalogoEditableViewSet):
     queryset = SistemaOperativo.objects.all().order_by("descripcion", "nombre")
     serializer_class = SistemaOperativoSerializer
+    ordering_fields = ["descripcion", "nombre", "codigo_so"]
+    ordering = ["descripcion", "nombre"]
 
 
-class TipoDiscoViewSet(viewsets.ReadOnlyModelViewSet):
-    permission_classes = [IsAuthenticated, IsInMopInventarioGroup]
+class TipoDiscoViewSet(CatalogoEditableViewSet):
     queryset = TipoDisco.objects.all().order_by("descripcion")
     serializer_class = TipoDiscoSerializer
 
 
-class TamanoDiscoCatalogoViewSet(viewsets.ReadOnlyModelViewSet):
-    permission_classes = [IsAuthenticated, IsInMopInventarioGroup]
+class TamanoDiscoCatalogoViewSet(CatalogoEditableViewSet):
     queryset = TamanoDiscoCatalogo.objects.all().order_by("descripcion")
     serializer_class = TamanoDiscoCatalogoSerializer
 
 
-class MarcaMonitorCatalogoViewSet(viewsets.ReadOnlyModelViewSet):
-    permission_classes = [IsAuthenticated, IsInMopInventarioGroup]
+class MarcaMonitorCatalogoViewSet(CatalogoEditableViewSet):
     queryset = MarcaMonitorCatalogo.objects.all().order_by("descripcion")
     serializer_class = MarcaMonitorCatalogoSerializer
 
 
-class PulgadaMonitorCatalogoViewSet(viewsets.ReadOnlyModelViewSet):
-    permission_classes = [IsAuthenticated, IsInMopInventarioGroup]
+class PulgadaMonitorCatalogoViewSet(CatalogoEditableViewSet):
     queryset = PulgadaMonitorCatalogo.objects.all().order_by("descripcion")
     serializer_class = PulgadaMonitorCatalogoSerializer
 
 
-class TipoMantenimientoViewSet(viewsets.ReadOnlyModelViewSet):
-    permission_classes = [IsAuthenticated, IsInMopInventarioGroup]
+class TipoMantenimientoViewSet(CatalogoEditableViewSet):
     queryset = TipoMantenimiento.objects.all().order_by("descripcion")
     serializer_class = TipoMantenimientoSerializer
 
 
-class EstadoMantenimientoViewSet(viewsets.ReadOnlyModelViewSet):
-    permission_classes = [IsAuthenticated, IsInMopInventarioGroup]
+class EstadoMantenimientoViewSet(CatalogoEditableViewSet):
     queryset = EstadoMantenimiento.objects.all().order_by("descripcion")
     serializer_class = EstadoMantenimientoSerializer
+
+
+class CargoFuncionarioViewSet(CatalogoEditableViewSet):
+    queryset = CargoFuncionario.objects.all().order_by("descripcion")
+    serializer_class = CargoFuncionarioSerializer
+    ordering_fields = ["descripcion", "codigo_cargo", "nivel_jerarquico"]
+    ordering = ["descripcion"]
+
+
+class UnidadFuncionarioViewSet(CatalogoEditableViewSet):
+    queryset = UnidadFuncionario.objects.all().order_by("descripcion")
+    serializer_class = UnidadFuncionarioSerializer
+    search_fields = ["descripcion", "sigla"]
+    ordering_fields = ["descripcion", "codigo_unidad", "sigla"]
+    ordering = ["descripcion"]
 
 
 # -------- Funcionarios (PRO: list mini + retrieve detalle + write para POST/PATCH) --------

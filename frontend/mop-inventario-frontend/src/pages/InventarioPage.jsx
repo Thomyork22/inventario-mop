@@ -3,7 +3,6 @@ import { useSearchParams } from "react-router-dom";
 import { api, getApiErrorMessage } from "../api/api";
 import { useCatalogos } from "../catalogos/CatalogosContext.jsx";
 import EquipoDetailModal from "../components/EquipoDetailModal.jsx";
-import AsignarDevolverModal from "../components/AsignarDevolverModal.jsx";
 import EditarEquipoModal from "../components/EditarEquipoModal.jsx";
 import NuevoEquipoModal from "../components/NuevoEquipoModal.jsx";
 
@@ -22,6 +21,7 @@ export default function InventarioPage() {
   const { data: catalogosData, loading: catalogosLoading, errors: catalogosErrors } = useCatalogos();
 
   const [search, setSearch] = useState("");
+  const [searchSuggestions, setSearchSuggestions] = useState([]);
   const debouncedSearch = useDebounced(search, 350);
 
   const [filters, setFilters] = useState({
@@ -50,9 +50,6 @@ export default function InventarioPage() {
   // Modal detalle
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedEquipo, setSelectedEquipo] = useState(null);
-
-  // Modal asignar/devolver
-  const [asignarOpen, setAsignarOpen] = useState(false);
 
   // Modal editar
   const [editarOpen, setEditarOpen] = useState(false);
@@ -205,24 +202,73 @@ export default function InventarioPage() {
     }
   }
 
-  async function reloadSelectedEquipo() {
-    if (!selectedEquipo?.id_equipo) return;
-    try {
-      const res = await api.get(`/equipos/${selectedEquipo.id_equipo}/`);
-      setSelectedEquipo(res.data);
-    } catch {}
-  }
-
   useEffect(() => {
     reloadEquipos();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queryParams]);
+
+  useEffect(() => {
+    const text = search.trim();
+    if (text.length < 2) {
+      setSearchSuggestions([]);
+      return;
+    }
+    const t = setTimeout(async () => {
+      try {
+        const res = await api.get("/equipos/", {
+          params: { search: text, ordering: "-id_equipo", page: 1 },
+        });
+        const list = res.data?.results ?? res.data ?? [];
+        setSearchSuggestions(Array.isArray(list) ? list.slice(0, 8) : []);
+      } catch {
+        setSearchSuggestions([]);
+      }
+    }, 220);
+    return () => clearTimeout(t);
+  }, [search]);
 
   const equipos = data.results;
 
   function openDetail(equipo) {
     setSelectedEquipo(equipo);
     setDetailOpen(true);
+  }
+
+  function openEditFromRow(equipo) {
+    setSelectedEquipo(equipo);
+    setEditarOpen(true);
+  }
+
+  async function toggleActivoEquipo(equipo) {
+    if (!equipo?.id_equipo) return;
+    try {
+      await api.patch(`/equipos/${equipo.id_equipo}/`, {
+        activo: !Boolean(equipo.activo),
+      });
+      await reloadEquipos();
+      if (selectedEquipo?.id_equipo === equipo.id_equipo) {
+        setSelectedEquipo((prev) => (prev ? { ...prev, activo: !Boolean(prev.activo) } : prev));
+      }
+    } catch (e) {
+      setError(getApiErrorMessage(e, "No se pudo ocultar/activar el equipo."));
+    }
+  }
+
+  async function eliminarEquipo(equipo) {
+    if (!equipo?.id_equipo) return;
+    const ok = window.confirm(`¿Eliminar equipo ${equipo.numero_inventario || equipo.id_equipo}?`);
+    if (!ok) return;
+    try {
+      await api.delete(`/equipos/${equipo.id_equipo}/`);
+      if (selectedEquipo?.id_equipo === equipo.id_equipo) {
+        setDetailOpen(false);
+        setEditarOpen(false);
+        setSelectedEquipo(null);
+      }
+      await reloadEquipos();
+    } catch (e) {
+      setError(getApiErrorMessage(e, "No se pudo eliminar el equipo."));
+    }
   }
 
   async function clearAllInventario() {
@@ -238,7 +284,6 @@ export default function InventarioPage() {
     try {
       const res = await api.post("/inventario/clear/");
       setDetailOpen(false);
-      setAsignarOpen(false);
       setEditarOpen(false);
       setSelectedEquipo(null);
       setPage(1);
@@ -266,20 +311,7 @@ export default function InventarioPage() {
         open={detailOpen}
         onClose={() => setDetailOpen(false)}
         equipo={selectedEquipo}
-        onAssign={() => setAsignarOpen(true)}
         onEdit={() => setEditarOpen(true)}
-      />
-
-      {/* MODAL ASIGNAR/DEVOLVER */}
-      <AsignarDevolverModal
-        open={asignarOpen}
-        onClose={() => setAsignarOpen(false)}
-        equipo={selectedEquipo}
-        estadosCatalogo={catalogos.estados}
-        onDone={async () => {
-          await reloadEquipos();
-          await reloadSelectedEquipo();
-        }}
       />
 
       {/* MODAL EDITAR */}
@@ -348,6 +380,23 @@ export default function InventarioPage() {
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Inventario, serie o modelo…"
             />
+            {searchSuggestions.length > 0 ? (
+              <div className="catalogSuggestList">
+                {searchSuggestions.map((item) => (
+                  <button
+                    key={item.id_equipo}
+                    type="button"
+                    className="catalogSuggestItem"
+                    onClick={() => {
+                      setSearch(item.numero_inventario || item.numero_serie || "");
+                      setSearchSuggestions([]);
+                    }}
+                  >
+                    {(item.numero_inventario || "—") + " · " + (item.numero_serie || "sin serie")}
+                  </button>
+                ))}
+              </div>
+            ) : null}
           </div>
 
           <div className="field">
@@ -580,6 +629,15 @@ export default function InventarioPage() {
                     <td className="td inv-td-right">
                       <button className="rowBtn" onClick={() => openDetail(e)}>
                         Ver
+                      </button>
+                      <button className="rowBtn" onClick={() => openEditFromRow(e)}>
+                        Editar
+                      </button>
+                      <button className="rowBtn" onClick={() => toggleActivoEquipo(e)}>
+                        {e.activo ? "Ocultar" : "Mostrar"}
+                      </button>
+                      <button className="rowBtn danger" onClick={() => eliminarEquipo(e)}>
+                        Eliminar
                       </button>
                     </td>
                   </tr>

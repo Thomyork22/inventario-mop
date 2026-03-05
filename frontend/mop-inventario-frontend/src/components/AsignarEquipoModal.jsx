@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { api } from "../api/api";
+import { api, getApiErrorMessage } from "../api/api";
 
 function useDebounced(value, delay = 300) {
   const [v, setV] = useState(value);
@@ -46,8 +46,7 @@ export default function AsignarEquipoModal({ open, onClose, equipo, onAssigned }
         const list = res.data?.results ?? res.data ?? [];
         if (mounted) setFuncionarios(list);
       } catch (e) {
-        const msg = e?.response?.data?.detail || e?.message || "Error cargando funcionarios";
-        if (mounted) setErr(msg);
+        if (mounted) setErr(getApiErrorMessage(e, "Error cargando funcionarios."));
       } finally {
         if (mounted) setLoading(false);
       }
@@ -78,14 +77,7 @@ export default function AsignarEquipoModal({ open, onClose, equipo, onAssigned }
       onAssigned?.();
       onClose?.();
     } catch (e) {
-      const data = e?.response?.data;
-      const msg =
-        (typeof data === "string" && data) ||
-        data?.detail ||
-        (data && JSON.stringify(data)) ||
-        e?.message ||
-        "No se pudo asignar";
-      setErr(msg);
+      setErr(getApiErrorMessage(e, "No se pudo asignar."));
     } finally {
       setSaving(false);
     }

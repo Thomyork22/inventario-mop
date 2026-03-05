@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { api, getApiErrorMessage } from "../api/api";
+import { useCatalogos } from "../catalogos/CatalogosContext.jsx";
 
 export default function FuncionariosPage() {
+  const { data: catalogosData } = useCatalogos();
+  const cargos = catalogosData.cargosFuncionario ?? [];
+  const unidades = catalogosData.unidadesFuncionario ?? [];
+
   // ---- data ----
   const [rows, setRows] = useState([]);
   const [count, setCount] = useState(0);
@@ -15,6 +20,7 @@ export default function FuncionariosPage() {
   const pageSize = 10;
 
   const [q, setQ] = useState("");
+  const [searchSuggestions, setSearchSuggestions] = useState([]);
 
   // ---- modal: nuevo ----
   const [openNew, setOpenNew] = useState(false);
@@ -94,6 +100,26 @@ export default function FuncionariosPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    const text = q.trim();
+    if (text.length < 2) {
+      setSearchSuggestions([]);
+      return;
+    }
+    const t = setTimeout(async () => {
+      try {
+        const res = await api.get("/funcionarios/", {
+          params: { search: text, ordering: "-id_funcionario", page: 1 },
+        });
+        const list = res.data?.results ?? res.data ?? [];
+        setSearchSuggestions(Array.isArray(list) ? list.slice(0, 8) : []);
+      } catch {
+        setSearchSuggestions([]);
+      }
+    }, 220);
+    return () => clearTimeout(t);
+  }, [q]);
+
   const totalPages = useMemo(() => Math.max(Math.ceil((count || 0) / pageSize), 1), [count]);
 
   function isImportedPlaceholderEmail(value) {
@@ -128,6 +154,8 @@ export default function FuncionariosPage() {
       if (!form.rut?.trim()) return setFormErr("Ingresa RUT.");
       if (!form.nombre_completo?.trim()) return setFormErr("Ingresa nombre completo.");
       if (!form.email_institucional?.trim()) return setFormErr("Ingresa email institucional.");
+      if (!isRutValid(form.rut)) return setFormErr("RUT inválido. Formato esperado: 12345678-9.");
+      if (!isTelefonoValid(form.telefono)) return setFormErr("Teléfono inválido. Solo números y + - ( ).");
 
       const payload = {
         rut: form.rut.trim(),
@@ -214,6 +242,9 @@ export default function FuncionariosPage() {
     setEditSaving(true);
     setEditErr("");
     try {
+      if (!isRutValid(editForm.rut)) return setEditErr("RUT inválido. Formato esperado: 12345678-9.");
+      if (!isTelefonoValid(editForm.telefono)) return setEditErr("Teléfono inválido. Solo números y + - ( ).");
+
       const payload = {
         rut: editForm.rut?.trim() || "",
         nombre_completo: editForm.nombre_completo?.trim() || "",
@@ -292,6 +323,25 @@ export default function FuncionariosPage() {
               placeholder="RUT / nombre / email…"
               className="input"
             />
+            {searchSuggestions.length > 0 ? (
+              <div className="catalogSuggestList">
+                {searchSuggestions.map((f) => (
+                  <button
+                    key={f.id_funcionario}
+                    type="button"
+                    className="catalogSuggestItem"
+                    onClick={() => {
+                      setQ(f.nombre_completo || f.rut || "");
+                      setSearchSuggestions([]);
+                      setPage(1);
+                      loadFuncionarios(1);
+                    }}
+                  >
+                    {(f.nombre_completo || "—") + " (" + (f.rut || "sin rut") + ")"}
+                  </button>
+                ))}
+              </div>
+            ) : null}
             <div className="u-flex-gap-8 u-mt-10">
               <button
                 className="smallBtn"
@@ -432,7 +482,13 @@ export default function FuncionariosPage() {
             <div className="formGrid">
               <div>
                 <div className="label">RUT *</div>
-                <input value={form.rut} onChange={(e) => setForm((p) => ({ ...p, rut: e.target.value }))} className="input" />
+                <input
+                  value={form.rut}
+                  maxLength={12}
+                  onChange={(e) => setForm((p) => ({ ...p, rut: sanitizeRutInput(e.target.value) }))}
+                  className="input"
+                  placeholder="12345678-9"
+                />
               </div>
 
               <div>
@@ -447,27 +503,43 @@ export default function FuncionariosPage() {
 
               <div>
                 <div className="label">Teléfono</div>
-                <input value={form.telefono} onChange={(e) => setForm((p) => ({ ...p, telefono: e.target.value }))} className="input" />
+                <input
+                  value={form.telefono}
+                  onChange={(e) => setForm((p) => ({ ...p, telefono: sanitizeTelefonoInput(e.target.value) }))}
+                  className="input"
+                />
               </div>
 
               <div>
-                <div className="label">Código cargo (opcional)</div>
-                <input
+                <div className="label">Cargo</div>
+                <select
                   value={form.codigo_cargo_id}
-                  onChange={(e) => setForm((p) => ({ ...p, codigo_cargo_id: e.target.value.replace(/[^\d]/g, "") }))}
+                  onChange={(e) => setForm((p) => ({ ...p, codigo_cargo_id: e.target.value }))}
                   className="input"
-                  placeholder="Ej: 1"
-                />
+                >
+                  <option value="">Sin cargo</option>
+                  {cargos.map((c) => (
+                    <option key={c.codigo_cargo} value={c.codigo_cargo}>
+                      {c.descripcion}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
-                <div className="label">Código unidad (opcional)</div>
-                <input
+                <div className="label">Unidad</div>
+                <select
                   value={form.codigo_unidad_id}
-                  onChange={(e) => setForm((p) => ({ ...p, codigo_unidad_id: e.target.value.replace(/[^\d]/g, "") }))}
+                  onChange={(e) => setForm((p) => ({ ...p, codigo_unidad_id: e.target.value }))}
                   className="input"
-                  placeholder="Ej: 3"
-                />
+                >
+                  <option value="">Sin unidad</option>
+                  {unidades.map((u) => (
+                    <option key={u.codigo_unidad} value={u.codigo_unidad}>
+                      {u.sigla ? `${u.sigla} - ` : ""}{u.descripcion}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
@@ -514,6 +586,8 @@ export default function FuncionariosPage() {
             <div className="u-p-16 u-grid-gap-12">
               <div className="kvGrid">
                 <KV label="Teléfono" value={active.telefono || "—"} />
+                <KV label="Cargo" value={active.cargo?.descripcion || "—"} />
+                <KV label="Unidad" value={active.unidad?.descripcion || "—"} />
                 <KV label="Activo" value={active.activo ? "Sí" : "No"} />
                 <KV label="Fecha ingreso" value={formatDate(active.fecha_ingreso)} />
               </div>
@@ -606,7 +680,12 @@ export default function FuncionariosPage() {
             <div className="formGrid">
               <div>
                 <div className="label">RUT</div>
-                <input value={editForm.rut} onChange={(e) => setEditForm((p) => ({ ...p, rut: e.target.value }))} className="input" />
+                <input
+                  value={editForm.rut}
+                  maxLength={12}
+                  onChange={(e) => setEditForm((p) => ({ ...p, rut: sanitizeRutInput(e.target.value) }))}
+                  className="input"
+                />
               </div>
 
               <div>
@@ -621,25 +700,43 @@ export default function FuncionariosPage() {
 
               <div>
                 <div className="label">Teléfono</div>
-                <input value={editForm.telefono} onChange={(e) => setEditForm((p) => ({ ...p, telefono: e.target.value }))} className="input" />
+                <input
+                  value={editForm.telefono}
+                  onChange={(e) => setEditForm((p) => ({ ...p, telefono: sanitizeTelefonoInput(e.target.value) }))}
+                  className="input"
+                />
               </div>
 
               <div>
-                <div className="label">Código cargo</div>
-                <input
+                <div className="label">Cargo</div>
+                <select
                   value={editForm.codigo_cargo_id}
-                  onChange={(e) => setEditForm((p) => ({ ...p, codigo_cargo_id: e.target.value.replace(/[^\d]/g, "") }))}
+                  onChange={(e) => setEditForm((p) => ({ ...p, codigo_cargo_id: e.target.value }))}
                   className="input"
-                />
+                >
+                  <option value="">Sin cargo</option>
+                  {cargos.map((c) => (
+                    <option key={c.codigo_cargo} value={c.codigo_cargo}>
+                      {c.descripcion}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
-                <div className="label">Código unidad</div>
-                <input
+                <div className="label">Unidad</div>
+                <select
                   value={editForm.codigo_unidad_id}
-                  onChange={(e) => setEditForm((p) => ({ ...p, codigo_unidad_id: e.target.value.replace(/[^\d]/g, "") }))}
+                  onChange={(e) => setEditForm((p) => ({ ...p, codigo_unidad_id: e.target.value }))}
                   className="input"
-                />
+                >
+                  <option value="">Sin unidad</option>
+                  {unidades.map((u) => (
+                    <option key={u.codigo_unidad} value={u.codigo_unidad}>
+                      {u.sigla ? `${u.sigla} - ` : ""}{u.descripcion}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
@@ -673,6 +770,30 @@ export default function FuncionariosPage() {
       ) : null}
     </div>
   );
+}
+
+function sanitizeRutInput(value) {
+  return String(value || "")
+    .toUpperCase()
+    .replace(/[^0-9Kk-]/g, "")
+    .slice(0, 12);
+}
+
+function sanitizeTelefonoInput(value) {
+  return String(value || "").replace(/[^0-9+\-() ]/g, "").slice(0, 20);
+}
+
+function isRutValid(value) {
+  const v = String(value || "").trim().toUpperCase();
+  return /^\d{7,8}-[\dK]$/.test(v);
+}
+
+function isTelefonoValid(value) {
+  const v = String(value || "").trim();
+  if (!v) return true;
+  if (!/^[0-9+\-() ]+$/.test(v)) return false;
+  const digits = v.replace(/\D/g, "");
+  return digits.length >= 7 && digits.length <= 15;
 }
 
 /* =========================

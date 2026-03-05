@@ -870,7 +870,10 @@ html.dark .table tbody tr:hover {
 }
 
 .inv-td-right {
-  text-align: right;
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
 }
 
 .modal-textarea {
@@ -1823,6 +1826,36 @@ html.dark .dash-kpi-card.is-warn {
   background: #fff;
   font-weight: 800;
   cursor: pointer;
+}
+
+.rowBtn.danger {
+  margin-left: 8px;
+  border-color: var(--danger-border);
+  background: var(--danger-bg);
+  color: var(--danger-text);
+}
+
+.catalogSuggestList {
+  margin-top: 8px;
+  max-height: 180px;
+  overflow: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: var(--card);
+}
+
+.catalogSuggestItem {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.catalogSuggestItem:hover {
+  background: var(--card-soft);
 }
 
 .kpiGrid {

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { api } from "../api/api";
+import { api, getApiErrorMessage } from "../api/api";
 
 export default function EditarEquipoModal({
   open,
@@ -114,14 +114,7 @@ export default function EditarEquipoModal({
       onSaved?.();
       onClose?.();
     } catch (e) {
-      const msg =
-        e?.response?.data?.detail ||
-        (typeof e?.response?.data === "object"
-          ? JSON.stringify(e.response.data)
-          : null) ||
-        e?.message ||
-        "No se pudo guardar.";
-      setErr(msg);
+      setErr(getApiErrorMessage(e, "No se pudo guardar el equipo."));
     } finally {
       setLoading(false);
     }

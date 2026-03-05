@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { api } from "../api/api";
+import { api, getApiErrorMessage } from "../api/api";
 
 function todayISO() {
   const d = new Date();
@@ -147,12 +147,7 @@ export default function NuevoEquipoModal({ open, onClose, catalogos, onCreated }
       onCreated?.(created);
       onClose?.();
     } catch (e) {
-      const msg =
-        e?.response?.data?.detail ||
-        (typeof e?.response?.data === "object" ? JSON.stringify(e.response.data) : null) ||
-        e?.message ||
-        "No se pudo crear.";
-      setErr(msg);
+      setErr(getApiErrorMessage(e, "No se pudo crear el equipo."));
     } finally {
       setLoading(false);
     }

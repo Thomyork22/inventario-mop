@@ -5,8 +5,10 @@ import AppLayout from "./layouts/AppLayout.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import DashboardPage from "./pages/DashboardPage.jsx";
 import InventarioPage from "./pages/InventarioPage.jsx";
+import AsignacionesPage from "./pages/AsignacionesPage.jsx";
 import MantencionesPage from "./pages/MantencionesPage.jsx";
 import FuncionariosPage from "./pages/FuncionariosPage.jsx";
+import CatalogosPage from "./pages/CatalogosPage.jsx";
 import ReportesPage from "./pages/ReportesPage.jsx";
 import ConfiguracionPage from "./pages/ConfiguracionPage.jsx";
 
@@ -35,8 +37,10 @@ export default function App() {
       >
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/inventario" element={<InventarioPage />} />
+        <Route path="/asignaciones" element={<AsignacionesPage />} />
         <Route path="/mantenciones" element={<MantencionesPage />} />
         <Route path="/funcionarios" element={<FuncionariosPage />} />
+        <Route path="/catalogos" element={<CatalogosPage />} />
         <Route path="/reportes" element={<ReportesPage />} />
         <Route path="/configuracion" element={<ConfiguracionPage />} />
       </Route>

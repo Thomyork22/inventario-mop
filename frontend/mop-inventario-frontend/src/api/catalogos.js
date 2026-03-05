@@ -15,6 +15,8 @@ export const CATALOG_ENDPOINTS = {
   sedes: "/catalogos/sedes/",
   tiposMantenimiento: "/catalogos/tipos-mantenimiento/",
   estadosMantenimiento: "/catalogos/estados-mantenimiento/",
+  cargosFuncionario: "/catalogos/cargos-funcionario/",
+  unidadesFuncionario: "/catalogos/unidades-funcionario/",
 };
 
 export function pickList(payload) {

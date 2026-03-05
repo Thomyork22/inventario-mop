@@ -150,7 +150,6 @@ export default function EquipoDetailModal({
   open,
   onClose,
   equipo,
-  onAssign,
   onEdit,
 }) {
   const [showRawData, setShowRawData] = useState(false);
@@ -374,14 +373,6 @@ export default function EquipoDetailModal({
               title="Editar datos del equipo"
             >
               Editar
-            </button>
-
-            <button
-              className="primaryBtn"
-              onClick={() => onAssign?.(equipo)}
-              title="Asignar equipo a funcionario"
-            >
-              Asignar / Devolver
             </button>
           </div>
         </div>
