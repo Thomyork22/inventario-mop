@@ -897,6 +897,7 @@ html.dark .table tbody tr:hover {
 
 .eq-detail-backdrop {
   padding: clamp(10px, 2vw, 18px);
+  background: rgba(0, 0, 0, 0.18);
 }
 
 .eq-detail-modal {
@@ -904,6 +905,11 @@ html.dark .table tbody tr:hover {
   max-height: min(88vh, 940px);
   display: flex;
   flex-direction: column;
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.45);
+  position: relative;
+  z-index: 1;
 }
 
 .eq-detail-header,
@@ -1943,7 +1949,10 @@ html.dark .dash-kpi-card.is-warn {
 .barFill {
   height: 100%;
   border-radius: 999px;
-  background: #0b5cff;
+  min-width: 4px;
+  background: linear-gradient(90deg, #0b5cff 0%, #2f7bff 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+  transition: width 220ms ease;
 }
 
 .barValue {
@@ -2096,7 +2105,7 @@ html.dark .dash-kpi-card.is-warn {
 .backdrop {
   position: fixed;
   inset: 0px;
-  background: rgba(15, 23, 42, 0.45);
+  background: rgba(0, 0, 0, 0.46);
   display: grid;
   place-items: center;
   padding: 18px;

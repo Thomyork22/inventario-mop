@@ -194,7 +194,11 @@ export default function DashboardPage() {
                       </div>
 
                       <div className="barTrack">
-                        <progress className="dash-bar-fill" value={pctTotal} max={100} />
+                        <div
+                          className="barFill"
+                          style={{ width: `${Math.max(0, Math.min(100, pctTotal))}%` }}
+                          aria-label={`${x.sede}: ${pctLabel}`}
+                        />
                       </div>
 
                       <div className="barValue">{totalSede}</div>

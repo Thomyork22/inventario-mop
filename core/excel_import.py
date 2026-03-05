@@ -50,6 +50,15 @@ SEDE_ALIASES = {
     "La Unión": ("LA UNION", "LA UNIÓN"),
     "Bouchéff": ("BOUCHEFF", "BOUCHÉFF", "BOUCHEF", "BOUCHÉF"),
 }
+SEDE_KEYWORDS = {
+    "Ánimas": ("VALDIVIA", "PEDRO AGUIRRE CERDA"),
+    "Yungay": ("YUNGAY",),
+    "La Unión": ("LA UNION",),
+    "Bouchéff": ("BEAUCHEF", "BOUCHEF", "BOUCHEFF"),
+}
+REGION_CODE_TO_SEDE = {
+    "14": "Ánimas",
+}
 
 CODIGOS_COLUMNS = {
     "condicion_equipo_dict": "CONDICIÓN EQUIPO 1 / 2",
@@ -245,6 +254,7 @@ class ImportSummary:
     equipos_updated: int = 0
     asignaciones_created: int = 0
     monitores_created: int = 0
+    ubicaciones_backfilled: int = 0
     skipped: int = 0
     created: int = 0
     updated: int = 0
@@ -260,6 +270,7 @@ class ImportSummary:
             "equipos_updated": self.equipos_updated,
             "asignaciones_created": self.asignaciones_created,
             "monitores_created": self.monitores_created,
+            "ubicaciones_backfilled": self.ubicaciones_backfilled,
             "created": self.created,
             "updated": self.updated,
             "skipped": self.skipped,
@@ -297,11 +308,16 @@ class ExcelInventoryImporter:
                 continue
             self._import_equipos(sheet, dictionaries, summary)
 
+        summary.ubicaciones_backfilled = self._backfill_missing_ubicaciones()
+
         self.lote.estado = "completado"
         self.lote.resumen = summary.as_dict()
         with transaction.atomic():
             self.lote.save(update_fields=["estado", "resumen"])
         return summary.as_dict()
+
+    def run_backfill_ubicaciones(self):
+        return self._backfill_missing_ubicaciones()
 
     def _resolve_path(self, path):
         candidate = Path(path).expanduser()
@@ -910,16 +926,7 @@ class ExcelInventoryImporter:
 
     def _resolve_ubicacion_from_text(self, raw_value):
         text = self._normalize_lookup_text(raw_value)
-        if not text:
-            return None
-
-        matched_sede = None
-        for sede, aliases in SEDE_ALIASES.items():
-            normalized_aliases = [self._normalize_lookup_text(alias) for alias in aliases]
-            if any(text.endswith(alias) or f" {alias} " in f" {text} " for alias in normalized_aliases):
-                matched_sede = sede
-                break
-
+        matched_sede = self._match_sede_from_text(text)
         if not matched_sede:
             return None
 
@@ -931,6 +938,57 @@ class ExcelInventoryImporter:
             ubicacion.activo = True
             ubicacion.save(update_fields=["activo"])
         return ubicacion
+
+    def _match_sede_from_text(self, normalized_text):
+        text = normalized_text or ""
+        if not text:
+            return None
+
+        for code, sede in REGION_CODE_TO_SEDE.items():
+            if f" {code} " in f" {text} ":
+                return sede
+
+        for sede, aliases in SEDE_ALIASES.items():
+            normalized_aliases = [self._normalize_lookup_text(alias) for alias in aliases]
+            if any(text.endswith(alias) or f" {alias} " in f" {text} " for alias in normalized_aliases):
+                return sede
+
+        for sede, keywords in SEDE_KEYWORDS.items():
+            normalized_keywords = [self._normalize_lookup_text(keyword) for keyword in keywords]
+            if any(keyword in text for keyword in normalized_keywords):
+                return sede
+        return None
+
+    def _backfill_missing_ubicaciones(self):
+        updated = 0
+
+        for equipo in Equipo.objects.filter(id_ubicacion__isnull=True):
+            raw = equipo.raw_excel_data or {}
+            candidates = [
+                equipo.direccion_oficina_piso,
+                raw.get(EQUIPOS_COLUMNS["direccion_oficina_piso"]),
+                raw.get("REGIÓN"),
+                raw.get(EQUIPOS_COLUMNS["unidad"]),
+            ]
+            merged_text = " | ".join(str(value) for value in candidates if not self._is_blank(value))
+            normalized_text = self._normalize_lookup_text(merged_text)
+            matched_sede = self._match_sede_from_text(normalized_text)
+            if not matched_sede:
+                continue
+
+            ubicacion, _ = Ubicacion.objects.get_or_create(
+                nombre_sede=matched_sede,
+                defaults={"activo": True},
+            )
+            if ubicacion.activo is not True:
+                ubicacion.activo = True
+                ubicacion.save(update_fields=["activo"])
+
+            equipo.id_ubicacion = ubicacion
+            equipo.save(update_fields=["id_ubicacion"])
+            updated += 1
+
+        return updated
 
     def _field_needs_update(self, current, new_value):
         if new_value is None:

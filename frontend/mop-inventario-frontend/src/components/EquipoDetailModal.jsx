@@ -179,21 +179,40 @@ export default function EquipoDetailModal({
     setVisibleCount(60);
   }, [showRawData]);
 
-  if (!open) return null;
-
-  const rawRows = useMemo(
+  const rawData =
+    equipo?.raw_excel_data &&
+    typeof equipo.raw_excel_data === "object" &&
+    !Array.isArray(equipo.raw_excel_data)
+      ? equipo.raw_excel_data
+      : {};
+  const rawRowCount = useMemo(
     () =>
-      Object.entries(equipo?.raw_excel_data || {})
-    .filter(([key, value]) => {
-      if (key === "__sheet_name" || key === "__excel_row") return false;
-      if (!key || /^COLUMNA_\d+$/i.test(key)) return false;
-      if (value === null || value === undefined) return false;
-      if (typeof value === "string" && value.trim() === "") return false;
-      return true;
-    })
-    .sort(([a], [b]) => rawFieldSort(a) - rawFieldSort(b) || normalizeRawKey(a).localeCompare(normalizeRawKey(b))),
-    [equipo]
+      Object.entries(rawData).filter(([key, value]) => {
+        if (key === "__sheet_name" || key === "__excel_row") return false;
+        if (!key || /^COLUMNA_\d+$/i.test(key)) return false;
+        if (value === null || value === undefined) return false;
+        if (typeof value === "string" && value.trim() === "") return false;
+        return true;
+      }).length,
+    [rawData]
   );
+
+  const rawRows = useMemo(() => {
+    if (!showRawData) return [];
+    return Object.entries(rawData)
+      .filter(([key, value]) => {
+        if (key === "__sheet_name" || key === "__excel_row") return false;
+        if (!key || /^COLUMNA_\d+$/i.test(key)) return false;
+        if (value === null || value === undefined) return false;
+        if (typeof value === "string" && value.trim() === "") return false;
+        return true;
+      })
+      .sort(
+        ([a], [b]) =>
+          rawFieldSort(a) - rawFieldSort(b) ||
+          normalizeRawKey(a).localeCompare(normalizeRawKey(b))
+      );
+  }, [rawData, showRawData]);
   const displayedRawRows = rawRows.slice(0, visibleCount);
   const hasMoreRawRows = visibleCount < rawRows.length;
 
@@ -248,6 +267,8 @@ export default function EquipoDetailModal({
     readExcelField(equipo, "OBSERVACIÓN")
   );
 
+  if (!open) return null;
+
   return (
     <div className="backdrop eq-detail-backdrop" onMouseDown={onClose}>
       <div className="modal eq-detail-modal" onMouseDown={(e) => e.stopPropagation()}>
@@ -293,7 +314,7 @@ export default function EquipoDetailModal({
             <Field label="Obs." value={observacionValue} multiline />
           </div>
 
-          {rawRows.length > 0 ? (
+          {rawRowCount > 0 ? (
             <div className="col eq-detail-raw-col">
               <div className="field">
                 <div className="label">Origen Excel</div>
@@ -312,7 +333,7 @@ export default function EquipoDetailModal({
                     className="eq-detail-toggle-btn"
                     onClick={() => setShowRawData((prev) => !prev)}
                   >
-                    {showRawData ? "Ocultar" : `Ver ${rawRows.length} campos`}
+                    {showRawData ? "Ocultar" : `Ver ${rawRowCount} campos`}
                   </button>
                 </div>
                 {showRawData ? (
